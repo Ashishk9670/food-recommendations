@@ -1,0 +1,170 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import StarRating from "@/components/StarRating";
+import { CATEGORIES } from "@/lib/categories";
+
+export default function SubmitPage() {
+  const router = useRouter();
+  const [dishName, setDishName] = useState("");
+  const [category, setCategory] = useState<string>(CATEGORIES[0]);
+  const [rating, setRating] = useState(0);
+  const [reviewerName, setReviewerName] = useState("");
+  const [notes, setNotes] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    setImageFile(file);
+    setPreviewUrl(file ? URL.createObjectURL(file) : null);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (!dishName.trim()) {
+      setError("Please enter a dish name.");
+      return;
+    }
+    if (rating < 1) {
+      setError("Please choose a star rating.");
+      return;
+    }
+    if (!imageFile) {
+      setError("Please choose a photo.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.set("dishName", dishName);
+    formData.set("category", category);
+    formData.set("rating", String(rating));
+    formData.set("reviewerName", reviewerName);
+    formData.set("notes", notes);
+    formData.set("image", imageFile);
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/recommendations", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? "Something went wrong. Please try again.");
+      }
+      router.push("/");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-lg px-4 py-8">
+      <h1 className="mb-6 text-2xl font-bold text-gray-900">
+        Recommend a Dish
+      </h1>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            Dish name
+          </label>
+          <input
+            type="text"
+            value={dishName}
+            onChange={(e) => setDishName(e.target.value)}
+            placeholder="e.g. Hyderabadi Chicken Biryani"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-900 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            Category
+          </label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-900 focus:outline-none"
+          >
+            {CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            Rating
+          </label>
+          <StarRating value={rating} onChange={setRating} size="lg" />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            Photo
+          </label>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            onChange={handleImageChange}
+            className="w-full text-sm"
+          />
+          {previewUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={previewUrl}
+              alt="Preview"
+              className="mt-3 h-48 w-full rounded-lg object-cover"
+            />
+          )}
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            Your name <span className="text-gray-400">(optional)</span>
+          </label>
+          <input
+            type="text"
+            value={reviewerName}
+            onChange={(e) => setReviewerName(e.target.value)}
+            placeholder="e.g. Ashish"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-900 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            Notes <span className="text-gray-400">(optional)</span>
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={3}
+            placeholder="What made it great?"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-900 focus:outline-none"
+          />
+        </div>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="w-full rounded-lg bg-gray-900 px-4 py-2.5 font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+        >
+          {submitting ? "Submitting..." : "Submit Recommendation"}
+        </button>
+      </form>
+    </div>
+  );
+}

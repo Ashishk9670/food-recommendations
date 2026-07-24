@@ -1,0 +1,22 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Recommendation {
+  id           Int      @id @default(autoincrement())
+  dishName     String
+  category     String
+  rating       Int
+  imageUrl     String
+  reviewerName String?
+  notes        String?
+  createdAt    DateTime @default(now())
+}
