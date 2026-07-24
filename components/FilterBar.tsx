@@ -2,11 +2,13 @@ import Link from "next/link";
 import { CATEGORIES } from "@/lib/categories";
 
 const STAR_FILTERS = [4, 3, 2, 1];
+const PRICE_FILTERS = [200, 500, 1000];
 
-function buildHref(category?: string, minStars?: number) {
+function buildHref(category?: string, minStars?: number, maxPrice?: number) {
   const params = new URLSearchParams();
   if (category) params.set("category", category);
   if (minStars) params.set("minStars", String(minStars));
+  if (maxPrice) params.set("maxPrice", String(maxPrice));
   const query = params.toString();
   return query ? `/?${query}` : "/";
 }
@@ -37,20 +39,22 @@ function FilterPill({
 export default function FilterBar({
   category,
   minStars,
+  maxPrice,
 }: {
   category?: string;
   minStars?: number;
+  maxPrice?: number;
 }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-2">
-        <FilterPill href={buildHref(undefined, minStars)} active={!category}>
+        <FilterPill href={buildHref(undefined, minStars, maxPrice)} active={!category}>
           All categories
         </FilterPill>
         {CATEGORIES.map((cat) => (
           <FilterPill
             key={cat}
-            href={buildHref(cat, minStars)}
+            href={buildHref(cat, minStars, maxPrice)}
             active={category === cat}
           >
             {cat}
@@ -58,16 +62,30 @@ export default function FilterBar({
         ))}
       </div>
       <div className="flex flex-wrap gap-2">
-        <FilterPill href={buildHref(category, undefined)} active={!minStars}>
+        <FilterPill href={buildHref(category, undefined, maxPrice)} active={!minStars}>
           All ratings
         </FilterPill>
         {STAR_FILTERS.map((stars) => (
           <FilterPill
             key={stars}
-            href={buildHref(category, stars)}
+            href={buildHref(category, stars, maxPrice)}
             active={minStars === stars}
           >
             {stars}★ &amp; up
+          </FilterPill>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <FilterPill href={buildHref(category, minStars, undefined)} active={!maxPrice}>
+          All prices
+        </FilterPill>
+        {PRICE_FILTERS.map((price) => (
+          <FilterPill
+            key={price}
+            href={buildHref(category, minStars, price)}
+            active={maxPrice === price}
+          >
+            Under ₹{price}
           </FilterPill>
         ))}
       </div>

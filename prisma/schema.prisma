@@ -11,12 +11,16 @@ datasource db {
 }
 
 model Recommendation {
-  id           Int      @id @default(autoincrement())
-  dishName     String
-  category     String
-  rating       Int
-  imageUrl     String
-  reviewerName String?
-  notes        String?
-  createdAt    DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  dishName       String
+  category       String
+  rating         Int
+  // default lets this NOT NULL column backfill existing rows; the app always supplies a real value on create
+  price          Float    @default(0)
+  imageUrl       String
+  // default lets this NOT NULL column backfill existing rows; the app always supplies a real value on create
+  restaurantName String   @default("")
+  reviewerName   String?
+  notes          String?
+  createdAt      DateTime @default(now())
 }

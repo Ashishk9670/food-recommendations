@@ -1,21 +1,25 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import CategoryBadge from "@/components/CategoryBadge";
 import StarRating from "@/components/StarRating";
-import { CATEGORIES } from "@/lib/categories";
+import { detectCategory } from "@/lib/detectCategory";
 
 export default function SubmitPage() {
   const router = useRouter();
   const [dishName, setDishName] = useState("");
-  const [category, setCategory] = useState<string>(CATEGORIES[0]);
+  const [restaurantName, setRestaurantName] = useState("");
   const [rating, setRating] = useState(0);
+  const [price, setPrice] = useState("");
   const [reviewerName, setReviewerName] = useState("");
   const [notes, setNotes] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const detectedCategory = useMemo(() => detectCategory(dishName), [dishName]);
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
@@ -31,8 +35,17 @@ export default function SubmitPage() {
       setError("Please enter a dish name.");
       return;
     }
+    if (!restaurantName.trim()) {
+      setError("Please enter the restaurant or place name.");
+      return;
+    }
     if (rating < 1) {
       setError("Please choose a star rating.");
+      return;
+    }
+    const priceValue = Number(price);
+    if (!price.trim() || !Number.isFinite(priceValue) || priceValue < 0) {
+      setError("Please enter the price after discount.");
       return;
     }
     if (!imageFile) {
@@ -42,8 +55,9 @@ export default function SubmitPage() {
 
     const formData = new FormData();
     formData.set("dishName", dishName);
-    formData.set("category", category);
+    formData.set("restaurantName", restaurantName);
     formData.set("rating", String(rating));
+    formData.set("price", price);
     formData.set("reviewerName", reviewerName);
     formData.set("notes", notes);
     formData.set("image", imageFile);
@@ -83,23 +97,24 @@ export default function SubmitPage() {
             placeholder="e.g. Hyderabadi Chicken Biryani"
             className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-900 focus:outline-none"
           />
+          {dishName.trim() && (
+            <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+              Detected category: <CategoryBadge category={detectedCategory} />
+            </div>
+          )}
         </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">
-            Category
+            Restaurant / place
           </label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
+          <input
+            type="text"
+            value={restaurantName}
+            onChange={(e) => setRestaurantName(e.target.value)}
+            placeholder="e.g. Paradise Biryani"
             className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-900 focus:outline-none"
-          >
-            {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+          />
         </div>
 
         <div>
@@ -107,6 +122,21 @@ export default function SubmitPage() {
             Rating
           </label>
           <StarRating value={rating} onChange={setRating} size="lg" />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            Price after discount (₹)
+          </label>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            placeholder="e.g. 250"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-900 focus:outline-none"
+          />
         </div>
 
         <div>

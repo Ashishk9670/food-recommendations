@@ -7,7 +7,7 @@ import { prisma } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 type HomeProps = {
-  searchParams: Promise<{ category?: string; minStars?: string }>;
+  searchParams: Promise<{ category?: string; minStars?: string; maxPrice?: string }>;
 };
 
 export default async function Home({ searchParams }: HomeProps) {
@@ -17,11 +17,13 @@ export default async function Home({ searchParams }: HomeProps) {
       ? params.category
       : undefined;
   const minStars = params.minStars ? Number(params.minStars) : undefined;
+  const maxPrice = params.maxPrice ? Number(params.maxPrice) : undefined;
 
   const recommendations = await prisma.recommendation.findMany({
     where: {
       ...(category ? { category } : {}),
       ...(minStars ? { rating: { gte: minStars } } : {}),
+      ...(maxPrice ? { price: { lte: maxPrice } } : {}),
     },
     orderBy: { createdAt: "desc" },
   });
@@ -32,7 +34,7 @@ export default async function Home({ searchParams }: HomeProps) {
         <h1 className="text-2xl font-bold text-gray-900">
           Browse Recommendations
         </h1>
-        <FilterBar category={category} minStars={minStars} />
+        <FilterBar category={category} minStars={minStars} maxPrice={maxPrice} />
       </div>
 
       {recommendations.length === 0 ? (
@@ -50,7 +52,9 @@ export default async function Home({ searchParams }: HomeProps) {
               dishName={rec.dishName}
               category={rec.category}
               rating={rec.rating}
+              price={rec.price}
               imageUrl={rec.imageUrl}
+              restaurantName={rec.restaurantName}
               reviewerName={rec.reviewerName}
               notes={rec.notes}
             />

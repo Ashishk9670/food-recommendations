@@ -6,7 +6,9 @@ type RecommendationCardProps = {
   dishName: string;
   category: string;
   rating: number;
+  price: number;
   imageUrl: string;
+  restaurantName?: string | null;
   reviewerName?: string | null;
   notes?: string | null;
 };
@@ -15,7 +17,9 @@ export default function RecommendationCard({
   dishName,
   category,
   rating,
+  price,
   imageUrl,
+  restaurantName,
   reviewerName,
   notes,
 }: RecommendationCardProps) {
@@ -35,7 +39,13 @@ export default function RecommendationCard({
           <h3 className="font-semibold text-gray-900">{dishName}</h3>
           <CategoryBadge category={category} />
         </div>
-        <StarRating value={rating} readOnly />
+        {restaurantName && (
+          <p className="text-sm text-gray-500">at {restaurantName}</p>
+        )}
+        <div className="flex items-center justify-between">
+          <StarRating value={rating} readOnly />
+          <span className="font-semibold text-gray-900">₹{price}</span>
+        </div>
         {notes && <p className="text-sm text-gray-600 line-clamp-2">{notes}</p>}
         {reviewerName && (
           <p className="text-xs text-gray-400">— {reviewerName}</p>
