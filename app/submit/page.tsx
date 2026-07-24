@@ -12,6 +12,7 @@ import {
   MAX_RESTAURANT_NAME_LENGTH,
   MAX_REVIEWER_NAME_LENGTH,
 } from "@/lib/limits";
+import { ALPHA_SPACE_PATTERN, PRICE_PATTERN, stripNonAlpha, stripNonPriceChars } from "@/lib/validation";
 
 export default function SubmitPage() {
   const router = useRouter();
@@ -42,8 +43,16 @@ export default function SubmitPage() {
       setError("Please enter a dish name.");
       return;
     }
+    if (!ALPHA_SPACE_PATTERN.test(dishName.trim())) {
+      setError("Dish name can only contain letters and spaces.");
+      return;
+    }
     if (!restaurantName.trim()) {
       setError("Please enter the restaurant or place name.");
+      return;
+    }
+    if (!ALPHA_SPACE_PATTERN.test(restaurantName.trim())) {
+      setError("Restaurant name can only contain letters and spaces.");
       return;
     }
     if (rating < 1) {
@@ -51,8 +60,14 @@ export default function SubmitPage() {
       return;
     }
     const priceValue = Number(price);
-    if (!price.trim() || !Number.isFinite(priceValue) || priceValue < 0 || priceValue > MAX_PRICE) {
-      setError(`Please enter a valid price between 0 and ${MAX_PRICE}.`);
+    if (
+      !price.trim() ||
+      !PRICE_PATTERN.test(price.trim()) ||
+      !Number.isFinite(priceValue) ||
+      priceValue < 0 ||
+      priceValue > MAX_PRICE
+    ) {
+      setError(`Please enter a valid price (numbers only) between 0 and ${MAX_PRICE}.`);
       return;
     }
     if (!imageFile) {
@@ -100,7 +115,7 @@ export default function SubmitPage() {
           <input
             type="text"
             value={dishName}
-            onChange={(e) => setDishName(e.target.value)}
+            onChange={(e) => setDishName(stripNonAlpha(e.target.value))}
             placeholder="e.g. Hyderabadi Chicken Biryani"
             maxLength={MAX_DISH_NAME_LENGTH}
             className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
@@ -119,7 +134,7 @@ export default function SubmitPage() {
           <input
             type="text"
             value={restaurantName}
-            onChange={(e) => setRestaurantName(e.target.value)}
+            onChange={(e) => setRestaurantName(stripNonAlpha(e.target.value))}
             placeholder="e.g. Paradise Biryani"
             maxLength={MAX_RESTAURANT_NAME_LENGTH}
             className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
@@ -143,7 +158,7 @@ export default function SubmitPage() {
             max={MAX_PRICE}
             step="1"
             value={price}
-            onChange={(e) => setPrice(e.target.value)}
+            onChange={(e) => setPrice(stripNonPriceChars(e.target.value))}
             placeholder="e.g. 250"
             className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
           />

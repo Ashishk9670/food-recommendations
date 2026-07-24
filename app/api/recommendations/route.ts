@@ -12,6 +12,7 @@ import {
   MAX_RESTAURANT_NAME_LENGTH,
   MAX_REVIEWER_NAME_LENGTH,
 } from "@/lib/limits";
+import { ALPHA_SPACE_PATTERN, PRICE_PATTERN } from "@/lib/validation";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -42,6 +43,12 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
+  if (!ALPHA_SPACE_PATTERN.test(dishName.trim())) {
+    return NextResponse.json(
+      { error: "Dish name can only contain letters and spaces." },
+      { status: 400 },
+    );
+  }
   if (typeof restaurantName !== "string" || !restaurantName.trim()) {
     return NextResponse.json({ error: "Restaurant name is required." }, { status: 400 });
   }
@@ -51,12 +58,24 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
+  if (!ALPHA_SPACE_PATTERN.test(restaurantName.trim())) {
+    return NextResponse.json(
+      { error: "Restaurant name can only contain letters and spaces." },
+      { status: 400 },
+    );
+  }
   const rating = Number(ratingRaw);
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
     return NextResponse.json({ error: "Rating must be a whole number from 1 to 5." }, { status: 400 });
   }
   if (typeof priceRaw !== "string" || !priceRaw.trim()) {
     return NextResponse.json({ error: "Price after discount is required." }, { status: 400 });
+  }
+  if (!PRICE_PATTERN.test(priceRaw.trim())) {
+    return NextResponse.json(
+      { error: "Price after discount can only contain numbers." },
+      { status: 400 },
+    );
   }
   const price = Number(priceRaw);
   if (!Number.isFinite(price) || price < 0 || price > MAX_PRICE) {
