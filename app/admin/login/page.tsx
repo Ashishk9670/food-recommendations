@@ -31,8 +31,8 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="mx-auto max-w-sm px-4 py-16">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Admin Login</h1>
+    <div className="mx-auto min-h-[70vh] max-w-sm px-4 py-16">
+      <h1 className="mb-6 text-2xl font-bold text-slate-900">Admin Login</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="password"
@@ -40,13 +40,13 @@ export default function AdminLoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
           autoFocus
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-900 focus:outline-none"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-slate-600 focus:outline-none"
         />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-lg bg-gray-900 px-4 py-2.5 font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="w-full rounded-lg bg-slate-800 px-4 py-2.5 font-medium text-white transition-colors hover:bg-slate-900 disabled:opacity-50"
         >
           {submitting ? "Checking..." : "Log In"}
         </button>

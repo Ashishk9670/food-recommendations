@@ -28,17 +28,19 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-gray-50">
-        <header className="border-b border-gray-200 bg-white">
-          <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-            <Link href="/" className="text-lg font-bold text-gray-900">
-              🍽️ Food Recommendations
+      <body className="min-h-full flex flex-col bg-orange-50">
+        <header className="bg-gradient-to-r from-orange-600 to-rose-600 shadow-sm">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-4">
+            <Link href="/" className="whitespace-nowrap text-base font-bold text-white sm:text-lg">
+              <span className="sm:hidden">🍽️ Food Recs</span>
+              <span className="hidden sm:inline">🍽️ Food Recommendations</span>
             </Link>
             <Link
               href="/submit"
-              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+              className="flex-shrink-0 whitespace-nowrap rounded-lg bg-white px-4 py-2 text-sm font-semibold text-rose-600 shadow-sm hover:bg-orange-50"
             >
-              + Submit a Recommendation
+              <span className="sm:hidden">+ Submit</span>
+              <span className="hidden sm:inline">+ Submit a Recommendation</span>
             </Link>
           </div>
         </header>

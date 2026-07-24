@@ -33,8 +33,8 @@ function FilterPill({
       href={href}
       className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
         active
-          ? "bg-gray-900 text-white"
-          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          ? "bg-orange-600 text-white shadow-sm"
+          : "bg-white text-stone-600 ring-1 ring-orange-100 hover:bg-orange-100"
       }`}
     >
       {children}

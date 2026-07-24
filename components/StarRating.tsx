@@ -14,9 +14,13 @@ export default function StarRating({
   size = "sm",
 }: StarRatingProps) {
   const textSize = size === "lg" ? "text-3xl" : "text-lg";
+  // extra padding on the interactive variant keeps each star's tap target close to the
+  // ~44px minimum recommended for touchscreens, since the glyph alone is much smaller;
+  // the padding itself provides spacing, so no gap is needed on the container
+  const tapPadding = readOnly ? "" : "p-2";
 
   return (
-    <div className={`flex gap-0.5 ${textSize}`}>
+    <div className={`flex ${readOnly ? "gap-0.5" : ""} ${textSize}`}>
       {[1, 2, 3, 4, 5].map((star) => (
         <span
           key={star}
@@ -28,7 +32,7 @@ export default function StarRating({
               ? star <= value
                 ? "text-amber-400"
                 : "text-gray-300"
-              : `cursor-pointer transition-colors ${
+              : `inline-block cursor-pointer transition-colors ${tapPadding} ${
                   star <= value ? "text-amber-400" : "text-gray-300 hover:text-amber-300"
                 }`
           }

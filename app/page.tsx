@@ -40,16 +40,16 @@ export default async function Home({ searchParams }: HomeProps) {
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8">
       <div className="mb-6 space-y-4">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-stone-900">
           Browse Recommendations
         </h1>
         <FilterBar category={category} minStars={minStars} maxPrice={maxPrice} sort={sort} />
       </div>
 
       {recommendations.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-300 py-16 text-center text-gray-500">
+        <div className="rounded-2xl border border-dashed border-orange-200 bg-white/60 py-16 text-center text-stone-500">
           <p className="mb-3">No recommendations match these filters yet.</p>
-          <Link href="/submit" className="font-medium text-gray-900 underline">
+          <Link href="/submit" className="font-medium text-orange-600 underline">
             Be the first to submit one
           </Link>
         </div>

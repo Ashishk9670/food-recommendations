@@ -1,9 +1,9 @@
 const COLORS: Record<string, string> = {
-  Biryani: "bg-orange-100 text-orange-800",
-  Chicken: "bg-red-100 text-red-800",
-  Paneer: "bg-yellow-100 text-yellow-800",
-  Chinese: "bg-green-100 text-green-800",
-  Other: "bg-gray-100 text-gray-800",
+  Biryani: "bg-amber-100 text-amber-800",
+  Chicken: "bg-rose-100 text-rose-800",
+  Paneer: "bg-lime-100 text-lime-800",
+  Chinese: "bg-teal-100 text-teal-800",
+  Other: "bg-stone-100 text-stone-700",
 };
 
 export default function CategoryBadge({ category }: { category: string }) {

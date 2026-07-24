@@ -55,7 +55,7 @@ export default function LikeButton({
       disabled={liked || submitting}
       aria-pressed={liked}
       className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-medium transition-colors disabled:cursor-default ${
-        liked ? "bg-pink-100 text-pink-600" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+        liked ? "bg-rose-100 text-rose-600" : "bg-orange-50 text-stone-500 hover:bg-rose-50"
       }`}
     >
       <span>{liked ? "❤️" : "🤍"}</span>
