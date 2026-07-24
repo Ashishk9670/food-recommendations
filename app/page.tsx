@@ -7,7 +7,12 @@ import { prisma } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 type HomeProps = {
-  searchParams: Promise<{ category?: string; minStars?: string; maxPrice?: string }>;
+  searchParams: Promise<{
+    category?: string;
+    minStars?: string;
+    maxPrice?: string;
+    sort?: string;
+  }>;
 };
 
 export default async function Home({ searchParams }: HomeProps) {
@@ -18,6 +23,7 @@ export default async function Home({ searchParams }: HomeProps) {
       : undefined;
   const minStars = params.minStars ? Number(params.minStars) : undefined;
   const maxPrice = params.maxPrice ? Number(params.maxPrice) : undefined;
+  const sort = params.sort === "liked" ? "liked" : undefined;
 
   const recommendations = await prisma.recommendation.findMany({
     where: {
@@ -25,7 +31,10 @@ export default async function Home({ searchParams }: HomeProps) {
       ...(minStars ? { rating: { gte: minStars } } : {}),
       ...(maxPrice ? { price: { lte: maxPrice } } : {}),
     },
-    orderBy: { createdAt: "desc" },
+    orderBy:
+      sort === "liked"
+        ? [{ likeCount: "desc" }, { createdAt: "desc" }]
+        : { createdAt: "desc" },
   });
 
   return (
@@ -34,7 +43,7 @@ export default async function Home({ searchParams }: HomeProps) {
         <h1 className="text-2xl font-bold text-gray-900">
           Browse Recommendations
         </h1>
-        <FilterBar category={category} minStars={minStars} maxPrice={maxPrice} />
+        <FilterBar category={category} minStars={minStars} maxPrice={maxPrice} sort={sort} />
       </div>
 
       {recommendations.length === 0 ? (
@@ -49,11 +58,13 @@ export default async function Home({ searchParams }: HomeProps) {
           {recommendations.map((rec) => (
             <RecommendationCard
               key={rec.id}
+              id={rec.id}
               dishName={rec.dishName}
               category={rec.category}
               rating={rec.rating}
               price={rec.price}
               imageUrl={rec.imageUrl}
+              likeCount={rec.likeCount}
               restaurantName={rec.restaurantName}
               reviewerName={rec.reviewerName}
               notes={rec.notes}

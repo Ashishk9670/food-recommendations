@@ -55,6 +55,7 @@ export default async function AdminPage() {
               <div className="flex items-center gap-3">
                 <StarRating value={rec.rating} readOnly />
                 <span className="text-sm font-semibold text-gray-900">₹{rec.price}</span>
+                <span className="text-sm text-gray-500">❤️ {rec.likeCount}</span>
               </div>
               {rec.reviewerName && (
                 <p className="text-xs text-gray-400">— {rec.reviewerName}</p>

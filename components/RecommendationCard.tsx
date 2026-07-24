@@ -1,24 +1,29 @@
 import Image from "next/image";
 import CategoryBadge from "./CategoryBadge";
+import LikeButton from "./LikeButton";
 import StarRating from "./StarRating";
 
 type RecommendationCardProps = {
+  id: number;
   dishName: string;
   category: string;
   rating: number;
   price: number;
   imageUrl: string;
+  likeCount: number;
   restaurantName?: string | null;
   reviewerName?: string | null;
   notes?: string | null;
 };
 
 export default function RecommendationCard({
+  id,
   dishName,
   category,
   rating,
   price,
   imageUrl,
+  likeCount,
   restaurantName,
   reviewerName,
   notes,
@@ -47,9 +52,10 @@ export default function RecommendationCard({
           <span className="font-semibold text-gray-900">₹{price}</span>
         </div>
         {notes && <p className="text-sm text-gray-600 line-clamp-2">{notes}</p>}
-        {reviewerName && (
-          <p className="text-xs text-gray-400">— {reviewerName}</p>
-        )}
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-400">{reviewerName ? `— ${reviewerName}` : ""}</p>
+          <LikeButton id={id} initialLikeCount={likeCount} />
+        </div>
       </div>
     </div>
   );

@@ -22,5 +22,6 @@ model Recommendation {
   restaurantName String   @default("")
   reviewerName   String?
   notes          String?
+  likeCount      Int      @default(0)
   createdAt      DateTime @default(now())
 }
