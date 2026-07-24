@@ -5,6 +5,13 @@ import { useMemo, useState } from "react";
 import CategoryBadge from "@/components/CategoryBadge";
 import StarRating from "@/components/StarRating";
 import { detectCategory } from "@/lib/detectCategory";
+import {
+  MAX_DISH_NAME_LENGTH,
+  MAX_NOTES_LENGTH,
+  MAX_PRICE,
+  MAX_RESTAURANT_NAME_LENGTH,
+  MAX_REVIEWER_NAME_LENGTH,
+} from "@/lib/limits";
 
 export default function SubmitPage() {
   const router = useRouter();
@@ -44,8 +51,8 @@ export default function SubmitPage() {
       return;
     }
     const priceValue = Number(price);
-    if (!price.trim() || !Number.isFinite(priceValue) || priceValue < 0) {
-      setError("Please enter the price after discount.");
+    if (!price.trim() || !Number.isFinite(priceValue) || priceValue < 0 || priceValue > MAX_PRICE) {
+      setError(`Please enter a valid price between 0 and ${MAX_PRICE}.`);
       return;
     }
     if (!imageFile) {
@@ -95,6 +102,7 @@ export default function SubmitPage() {
             value={dishName}
             onChange={(e) => setDishName(e.target.value)}
             placeholder="e.g. Hyderabadi Chicken Biryani"
+            maxLength={MAX_DISH_NAME_LENGTH}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-900 focus:outline-none"
           />
           {dishName.trim() && (
@@ -113,6 +121,7 @@ export default function SubmitPage() {
             value={restaurantName}
             onChange={(e) => setRestaurantName(e.target.value)}
             placeholder="e.g. Paradise Biryani"
+            maxLength={MAX_RESTAURANT_NAME_LENGTH}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-900 focus:outline-none"
           />
         </div>
@@ -131,6 +140,7 @@ export default function SubmitPage() {
           <input
             type="number"
             min="0"
+            max={MAX_PRICE}
             step="1"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
@@ -168,6 +178,7 @@ export default function SubmitPage() {
             value={reviewerName}
             onChange={(e) => setReviewerName(e.target.value)}
             placeholder="e.g. Ashish"
+            maxLength={MAX_REVIEWER_NAME_LENGTH}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-900 focus:outline-none"
           />
         </div>
@@ -181,6 +192,7 @@ export default function SubmitPage() {
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
             placeholder="What made it great?"
+            maxLength={MAX_NOTES_LENGTH}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-900 focus:outline-none"
           />
         </div>

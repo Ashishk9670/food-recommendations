@@ -41,11 +41,11 @@ export default function RecommendationCard({
       </div>
       <div className="space-y-2 p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold text-gray-900">{dishName}</h3>
+          <h3 className="line-clamp-2 break-words font-semibold text-gray-900">{dishName}</h3>
           <CategoryBadge category={category} />
         </div>
         {restaurantName && (
-          <p className="text-sm text-gray-500">at {restaurantName}</p>
+          <p className="truncate text-sm text-gray-500">at {restaurantName}</p>
         )}
         <div className="flex items-center justify-between">
           <StarRating value={rating} readOnly />

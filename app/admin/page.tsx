@@ -50,7 +50,7 @@ export default async function AdminPage() {
                 <CategoryBadge category={rec.category} />
               </div>
               {rec.restaurantName && (
-                <p className="text-sm text-gray-500">at {rec.restaurantName}</p>
+                <p className="truncate text-sm text-gray-500">at {rec.restaurantName}</p>
               )}
               <div className="flex items-center gap-3">
                 <StarRating value={rec.rating} readOnly />

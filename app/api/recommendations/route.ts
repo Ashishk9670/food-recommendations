@@ -4,6 +4,14 @@ import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { detectCategory } from "@/lib/detectCategory";
+import { matchesImageSignature } from "@/lib/imageSignature";
+import {
+  MAX_DISH_NAME_LENGTH,
+  MAX_NOTES_LENGTH,
+  MAX_PRICE,
+  MAX_RESTAURANT_NAME_LENGTH,
+  MAX_REVIEWER_NAME_LENGTH,
+} from "@/lib/limits";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -28,8 +36,20 @@ export async function POST(request: NextRequest) {
   if (typeof dishName !== "string" || !dishName.trim()) {
     return NextResponse.json({ error: "Dish name is required." }, { status: 400 });
   }
+  if (dishName.trim().length > MAX_DISH_NAME_LENGTH) {
+    return NextResponse.json(
+      { error: `Dish name must be ${MAX_DISH_NAME_LENGTH} characters or fewer.` },
+      { status: 400 },
+    );
+  }
   if (typeof restaurantName !== "string" || !restaurantName.trim()) {
     return NextResponse.json({ error: "Restaurant name is required." }, { status: 400 });
+  }
+  if (restaurantName.trim().length > MAX_RESTAURANT_NAME_LENGTH) {
+    return NextResponse.json(
+      { error: `Restaurant name must be ${MAX_RESTAURANT_NAME_LENGTH} characters or fewer.` },
+      { status: 400 },
+    );
   }
   const rating = Number(ratingRaw);
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
@@ -39,8 +59,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Price after discount is required." }, { status: 400 });
   }
   const price = Number(priceRaw);
-  if (!Number.isFinite(price) || price < 0) {
-    return NextResponse.json({ error: "Price after discount must be a valid, non-negative number." }, { status: 400 });
+  if (!Number.isFinite(price) || price < 0 || price > MAX_PRICE) {
+    return NextResponse.json(
+      { error: `Price after discount must be a valid number between 0 and ${MAX_PRICE}.` },
+      { status: 400 },
+    );
+  }
+  if (typeof reviewerName === "string" && reviewerName.trim().length > MAX_REVIEWER_NAME_LENGTH) {
+    return NextResponse.json(
+      { error: `Your name must be ${MAX_REVIEWER_NAME_LENGTH} characters or fewer.` },
+      { status: 400 },
+    );
+  }
+  if (typeof notes === "string" && notes.trim().length > MAX_NOTES_LENGTH) {
+    return NextResponse.json(
+      { error: `Notes must be ${MAX_NOTES_LENGTH} characters or fewer.` },
+      { status: 400 },
+    );
   }
   if (!(image instanceof File) || image.size === 0) {
     return NextResponse.json({ error: "An image is required." }, { status: 400 });
@@ -55,10 +90,16 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
+  const bytes = Buffer.from(await image.arrayBuffer());
+  if (!matchesImageSignature(bytes, image.type)) {
+    return NextResponse.json(
+      { error: "File content doesn't match a valid JPEG, PNG, WEBP, or GIF image." },
+      { status: 400 },
+    );
+  }
 
   await mkdir(UPLOAD_DIR, { recursive: true });
   const filename = `${randomUUID()}.${extension}`;
-  const bytes = Buffer.from(await image.arrayBuffer());
   await writeFile(path.join(UPLOAD_DIR, filename), bytes);
 
   const recommendation = await prisma.recommendation.create({
