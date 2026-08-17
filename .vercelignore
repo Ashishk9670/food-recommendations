@@ -1,0 +1,8 @@
+.env
+.env.local
+.env.*.local
+dev.db
+dev.db-journal
+app/generated
+public/uploads/*
+!public/uploads/.gitkeep
