@@ -21,7 +21,8 @@ export default function AdminLoginPage() {
     });
 
     if (!res.ok) {
-      setError("Incorrect password.");
+      const body = await res.json().catch(() => null);
+      setError(body?.error ?? "Incorrect password.");
       setSubmitting(false);
       return;
     }
@@ -34,7 +35,11 @@ export default function AdminLoginPage() {
     <div className="mx-auto min-h-[70vh] max-w-sm px-4 py-16">
       <h1 className="mb-6 text-2xl font-bold text-slate-900">Admin Login</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
+        <label htmlFor="admin-password" className="sr-only">
+          Password
+        </label>
         <input
+          id="admin-password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -42,7 +47,11 @@ export default function AdminLoginPage() {
           autoFocus
           className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-slate-600 focus:outline-none"
         />
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && (
+          <p role="alert" className="text-sm text-red-600">
+            {error}
+          </p>
+        )}
         <button
           type="submit"
           disabled={submitting}

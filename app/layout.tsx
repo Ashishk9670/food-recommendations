@@ -13,9 +13,23 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_TITLE = "Food Recommendations";
+const SITE_DESCRIPTION = "Share and discover the best dishes, rated by everyone.";
+
 export const metadata: Metadata = {
-  title: "Food Recommendations",
-  description: "Share and discover the best dishes, rated by everyone.",
+  metadataBase: new URL(process.env.SITE_URL ?? "http://localhost:3000"),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({

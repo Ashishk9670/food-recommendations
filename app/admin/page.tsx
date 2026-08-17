@@ -48,6 +48,11 @@ export default async function AdminPage() {
               <div className="flex items-center gap-2">
                 <h3 className="truncate font-semibold text-slate-900">{rec.dishName}</h3>
                 <CategoryBadge category={rec.category} />
+                {rec.reportCount > 0 && (
+                  <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                    🚩 {rec.reportCount} report{rec.reportCount > 1 ? "s" : ""}
+                  </span>
+                )}
               </div>
               {rec.restaurantName && (
                 <p className="truncate text-sm text-slate-500">at {rec.restaurantName}</p>

@@ -1,10 +1,9 @@
 import { randomUUID } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { detectCategory } from "@/lib/detectCategory";
 import { matchesImageSignature } from "@/lib/imageSignature";
+import { uploadImage } from "@/lib/storage";
 import {
   MAX_DISH_NAME_LENGTH,
   MAX_NOTES_LENGTH,
@@ -13,8 +12,11 @@ import {
   MAX_REVIEWER_NAME_LENGTH,
 } from "@/lib/limits";
 import { ALPHA_SPACE_PATTERN, PRICE_PATTERN } from "@/lib/validation";
+import { getClientIp, isRateLimited } from "@/lib/rateLimit";
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
+const SUBMIT_LIMIT = 5;
+const SUBMIT_WINDOW_MS = 10 * 60 * 1000;
+
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -24,6 +26,13 @@ const ALLOWED_TYPES: Record<string, string> = {
 };
 
 export async function POST(request: NextRequest) {
+  if (isRateLimited(`submit:${getClientIp(request)}`, SUBMIT_LIMIT, SUBMIT_WINDOW_MS)) {
+    return NextResponse.json(
+      { error: "Too many submissions. Please try again later." },
+      { status: 429 },
+    );
+  }
+
   const formData = await request.formData();
 
   const dishName = formData.get("dishName");
@@ -117,20 +126,39 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  await mkdir(UPLOAD_DIR, { recursive: true });
-  const filename = `${randomUUID()}.${extension}`;
-  await writeFile(path.join(UPLOAD_DIR, filename), bytes);
+  const dishNameTrimmed = dishName.trim();
+  const restaurantNameTrimmed = restaurantName.trim();
+  const candidates = await prisma.recommendation.findMany({
+    where: { dishName: { contains: dishNameTrimmed, mode: "insensitive" } },
+    select: { dishName: true, restaurantName: true },
+  });
+  const isDuplicate = candidates.some(
+    (c) =>
+      c.dishName.trim().toLowerCase() === dishNameTrimmed.toLowerCase() &&
+      c.restaurantName.trim().toLowerCase() === restaurantNameTrimmed.toLowerCase(),
+  );
+  if (isDuplicate) {
+    return NextResponse.json(
+      { error: "This dish at this restaurant has already been recommended." },
+      { status: 409 },
+    );
+  }
 
+  const filename = `${randomUUID()}.${extension}`;
+  const imageUrl = await uploadImage(bytes, filename, image.type);
+
+  const editToken = randomUUID();
   const recommendation = await prisma.recommendation.create({
     data: {
-      dishName: dishName.trim(),
+      dishName: dishNameTrimmed,
       category: detectCategory(dishName),
       rating,
       price,
-      imageUrl: `/uploads/${filename}`,
-      restaurantName: restaurantName.trim(),
+      imageUrl,
+      restaurantName: restaurantNameTrimmed,
       reviewerName: typeof reviewerName === "string" && reviewerName.trim() ? reviewerName.trim() : null,
       notes: typeof notes === "string" && notes.trim() ? notes.trim() : null,
+      editToken,
     },
   });
 

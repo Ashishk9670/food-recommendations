@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model Recommendation {
@@ -23,5 +23,15 @@ model Recommendation {
   reviewerName   String?
   notes          String?
   likeCount      Int      @default(0)
+  reportCount    Int      @default(0)
+  // secret token generated at creation time; lets the submitter's browser edit/delete later with no real accounts
+  editToken      String   @default("")
   createdAt      DateTime @default(now())
+}
+
+model DeletionLog {
+  id             Int      @id @default(autoincrement())
+  dishName       String
+  restaurantName String
+  deletedAt      DateTime @default(now())
 }

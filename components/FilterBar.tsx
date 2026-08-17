@@ -9,12 +9,14 @@ function buildHref(
   minStars?: number,
   maxPrice?: number,
   sort?: string,
+  q?: string,
 ) {
   const params = new URLSearchParams();
   if (category) params.set("category", category);
   if (minStars) params.set("minStars", String(minStars));
   if (maxPrice) params.set("maxPrice", String(maxPrice));
   if (sort) params.set("sort", sort);
+  if (q) params.set("q", q);
   const query = params.toString();
   return query ? `/?${query}` : "/";
 }
@@ -47,22 +49,24 @@ export default function FilterBar({
   minStars,
   maxPrice,
   sort,
+  q,
 }: {
   category?: string;
   minStars?: number;
   maxPrice?: number;
   sort?: string;
+  q?: string;
 }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-2">
-        <FilterPill href={buildHref(undefined, minStars, maxPrice, sort)} active={!category}>
+        <FilterPill href={buildHref(undefined, minStars, maxPrice, sort, q)} active={!category}>
           All categories
         </FilterPill>
         {CATEGORIES.map((cat) => (
           <FilterPill
             key={cat}
-            href={buildHref(cat, minStars, maxPrice, sort)}
+            href={buildHref(cat, minStars, maxPrice, sort, q)}
             active={category === cat}
           >
             {cat}
@@ -70,13 +74,13 @@ export default function FilterBar({
         ))}
       </div>
       <div className="flex flex-wrap gap-2">
-        <FilterPill href={buildHref(category, undefined, maxPrice, sort)} active={!minStars}>
+        <FilterPill href={buildHref(category, undefined, maxPrice, sort, q)} active={!minStars}>
           All ratings
         </FilterPill>
         {STAR_FILTERS.map((stars) => (
           <FilterPill
             key={stars}
-            href={buildHref(category, stars, maxPrice, sort)}
+            href={buildHref(category, stars, maxPrice, sort, q)}
             active={minStars === stars}
           >
             {stars}★ &amp; up
@@ -84,13 +88,13 @@ export default function FilterBar({
         ))}
       </div>
       <div className="flex flex-wrap gap-2">
-        <FilterPill href={buildHref(category, minStars, undefined, sort)} active={!maxPrice}>
+        <FilterPill href={buildHref(category, minStars, undefined, sort, q)} active={!maxPrice}>
           All prices
         </FilterPill>
         {PRICE_FILTERS.map((price) => (
           <FilterPill
             key={price}
-            href={buildHref(category, minStars, price, sort)}
+            href={buildHref(category, minStars, price, sort, q)}
             active={maxPrice === price}
           >
             Under ₹{price}
@@ -98,11 +102,14 @@ export default function FilterBar({
         ))}
       </div>
       <div className="flex flex-wrap gap-2">
-        <FilterPill href={buildHref(category, minStars, maxPrice, undefined)} active={sort !== "liked"}>
+        <FilterPill href={buildHref(category, minStars, maxPrice, undefined, q)} active={!sort}>
           Newest
         </FilterPill>
-        <FilterPill href={buildHref(category, minStars, maxPrice, "liked")} active={sort === "liked"}>
+        <FilterPill href={buildHref(category, minStars, maxPrice, "liked", q)} active={sort === "liked"}>
           Most liked
+        </FilterPill>
+        <FilterPill href={buildHref(category, minStars, maxPrice, "rating", q)} active={sort === "rating"}>
+          Highest rated
         </FilterPill>
       </div>
     </div>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import CategoryBadge from "@/components/CategoryBadge";
 import StarRating from "@/components/StarRating";
 import { detectCategory } from "@/lib/detectCategory";
@@ -12,28 +13,79 @@ import {
   MAX_RESTAURANT_NAME_LENGTH,
   MAX_REVIEWER_NAME_LENGTH,
 } from "@/lib/limits";
+import { getOwnerToken } from "@/lib/ownerTokens";
 import { ALPHA_SPACE_PATTERN, PRICE_PATTERN, stripNonAlpha, stripNonPriceChars } from "@/lib/validation";
-import { saveOwnerToken } from "@/lib/ownerTokens";
 
-export default function SubmitPage() {
+export default function EditPage() {
   const router = useRouter();
+  const params = useParams<{ id: string }>();
+  const id = Number(params.id);
+
+  const [token, setToken] = useState<string | null | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
   const [dishName, setDishName] = useState("");
   const [restaurantName, setRestaurantName] = useState("");
   const [rating, setRating] = useState(0);
   const [price, setPrice] = useState("");
   const [reviewerName, setReviewerName] = useState("");
   const [notes, setNotes] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const detectedCategory = useMemo(() => detectCategory(dishName), [dishName]);
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
-    setImageFile(file);
-    setPreviewUrl(file ? URL.createObjectURL(file) : null);
+  useEffect(() => {
+    setToken(getOwnerToken(id) ?? null);
+  }, [id]);
+
+  useEffect(() => {
+    if (!Number.isInteger(id)) return;
+    fetch(`/api/recommendations/${id}`)
+      .then((res) => {
+        if (!res.ok) {
+          setNotFound(true);
+          return null;
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (!data) return;
+        setDishName(data.dishName);
+        setRestaurantName(data.restaurantName ?? "");
+        setRating(data.rating);
+        setPrice(String(data.price));
+        setReviewerName(data.reviewerName ?? "");
+        setNotes(data.notes ?? "");
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (token === undefined || loading) {
+    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-stone-500">Loading…</div>;
+  }
+
+  if (!token) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <p className="text-stone-700">You don&apos;t have permission to edit this post.</p>
+        <Link href="/" className="mt-4 inline-block font-medium text-orange-600 underline">
+          Back to Browse Recommendations
+        </Link>
+      </div>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <p className="text-stone-700">This recommendation no longer exists.</p>
+        <Link href="/" className="mt-4 inline-block font-medium text-orange-600 underline">
+          Back to Browse Recommendations
+        </Link>
+      </div>
+    );
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -71,32 +123,18 @@ export default function SubmitPage() {
       setError(`Please enter a valid price (numbers only) between 0 and ${MAX_PRICE}.`);
       return;
     }
-    if (!imageFile) {
-      setError("Please choose a photo.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.set("dishName", dishName);
-    formData.set("restaurantName", restaurantName);
-    formData.set("rating", String(rating));
-    formData.set("price", price);
-    formData.set("reviewerName", reviewerName);
-    formData.set("notes", notes);
-    formData.set("image", imageFile);
 
     setSubmitting(true);
     try {
-      const res = await fetch("/api/recommendations", {
-        method: "POST",
-        body: formData,
+      const res = await fetch(`/api/recommendations/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "x-edit-token": token as string },
+        body: JSON.stringify({ dishName, restaurantName, rating, price, reviewerName, notes }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? "Something went wrong. Please try again.");
       }
-      const created = await res.json();
-      saveOwnerToken(created.id, created.editToken);
       router.push("/");
       router.refresh();
     } catch (err) {
@@ -107,20 +145,17 @@ export default function SubmitPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold text-stone-900">
-        Recommend a Dish
-      </h1>
+      <h1 className="mb-6 text-2xl font-bold text-stone-900">Edit Your Recommendation</h1>
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label htmlFor="dishName" className="mb-1 block text-sm font-medium text-stone-700">
+          <label htmlFor="edit-dishName" className="mb-1 block text-sm font-medium text-stone-700">
             Dish name
           </label>
           <input
-            id="dishName"
+            id="edit-dishName"
             type="text"
             value={dishName}
             onChange={(e) => setDishName(stripNonAlpha(e.target.value))}
-            placeholder="e.g. Hyderabadi Chicken Biryani"
             maxLength={MAX_DISH_NAME_LENGTH}
             className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
           />
@@ -132,88 +167,63 @@ export default function SubmitPage() {
         </div>
 
         <div>
-          <label htmlFor="restaurantName" className="mb-1 block text-sm font-medium text-stone-700">
+          <label htmlFor="edit-restaurantName" className="mb-1 block text-sm font-medium text-stone-700">
             Restaurant / place
           </label>
           <input
-            id="restaurantName"
+            id="edit-restaurantName"
             type="text"
             value={restaurantName}
             onChange={(e) => setRestaurantName(stripNonAlpha(e.target.value))}
-            placeholder="e.g. Paradise Biryani"
             maxLength={MAX_RESTAURANT_NAME_LENGTH}
             className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
           />
         </div>
 
-        <fieldset>
-          <legend className="mb-1 text-sm font-medium text-stone-700">Rating</legend>
+        <div>
+          <span className="mb-1 block text-sm font-medium text-stone-700">Rating</span>
           <StarRating value={rating} onChange={setRating} size="lg" />
-        </fieldset>
+        </div>
 
         <div>
-          <label htmlFor="price" className="mb-1 block text-sm font-medium text-stone-700">
+          <label htmlFor="edit-price" className="mb-1 block text-sm font-medium text-stone-700">
             Price after discount (₹)
           </label>
           <input
-            id="price"
+            id="edit-price"
             type="number"
             min="0"
             max={MAX_PRICE}
             step="1"
             value={price}
             onChange={(e) => setPrice(stripNonPriceChars(e.target.value))}
-            placeholder="e.g. 250"
             className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
           />
         </div>
 
         <div>
-          <label htmlFor="photo" className="mb-1 block text-sm font-medium text-stone-700">
-            Photo
-          </label>
-          <input
-            id="photo"
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            onChange={handleImageChange}
-            className="w-full text-sm"
-          />
-          {previewUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="mt-3 h-48 w-full rounded-lg object-cover"
-            />
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="reviewerName" className="mb-1 block text-sm font-medium text-stone-700">
+          <label htmlFor="edit-reviewerName" className="mb-1 block text-sm font-medium text-stone-700">
             Your name <span className="text-stone-400">(optional)</span>
           </label>
           <input
-            id="reviewerName"
+            id="edit-reviewerName"
             type="text"
             value={reviewerName}
             onChange={(e) => setReviewerName(e.target.value)}
-            placeholder="e.g. Ashish"
             maxLength={MAX_REVIEWER_NAME_LENGTH}
             className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
           />
         </div>
 
         <div>
-          <label htmlFor="notes" className="mb-1 block text-sm font-medium text-stone-700">
+          <label htmlFor="edit-notes" className="mb-1 block text-sm font-medium text-stone-700">
             Notes <span className="text-stone-400">(optional)</span>
           </label>
           <textarea
-            id="notes"
+            id="edit-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
-            placeholder="What made it great?"
             maxLength={MAX_NOTES_LENGTH}
             className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
           />
@@ -230,7 +240,7 @@ export default function SubmitPage() {
           disabled={submitting}
           className="w-full rounded-lg bg-orange-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-orange-700 disabled:opacity-50"
         >
-          {submitting ? "Submitting..." : "Submit Recommendation"}
+          {submitting ? "Saving..." : "Save Changes"}
         </button>
       </form>
     </div>

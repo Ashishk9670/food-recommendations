@@ -1,6 +1,8 @@
 import Image from "next/image";
 import CategoryBadge from "./CategoryBadge";
 import LikeButton from "./LikeButton";
+import OwnerActions from "./OwnerActions";
+import ReportButton from "./ReportButton";
 import StarRating from "./StarRating";
 
 type RecommendationCardProps = {
@@ -55,6 +57,10 @@ export default function RecommendationCard({
         <div className="flex items-center justify-between">
           <p className="text-xs text-stone-400">{reviewerName ? `— ${reviewerName}` : ""}</p>
           <LikeButton id={id} initialLikeCount={likeCount} />
+        </div>
+        <div className="flex items-center justify-between">
+          <OwnerActions id={id} />
+          <ReportButton id={id} className="ml-auto" />
         </div>
       </div>
     </div>
