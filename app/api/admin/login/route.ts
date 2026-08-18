@@ -7,7 +7,7 @@ const LOGIN_LIMIT = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
 export async function POST(request: NextRequest) {
-  if (isRateLimited(`admin-login:${getClientIp(request)}`, LOGIN_LIMIT, LOGIN_WINDOW_MS)) {
+  if (await isRateLimited(`admin-login:${getClientIp(request)}`, LOGIN_LIMIT, LOGIN_WINDOW_MS)) {
     return NextResponse.json(
       { error: "Too many attempts. Please try again later." },
       { status: 429 },

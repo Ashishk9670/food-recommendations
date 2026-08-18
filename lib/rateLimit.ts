@@ -1,20 +1,32 @@
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 import { NextRequest } from "next/server";
 
-// In-memory sliding-window limiter. Resets on server restart and is per-instance,
-// so it won't hold up across multiple serverless instances — fine for now while
-// this app runs as a single SQLite-backed process; revisit alongside the prod DB swap.
-const hits = new Map<string, number[]>();
+const redis = Redis.fromEnv();
 
-export function isRateLimited(key: string, limit: number, windowMs: number): boolean {
-  const now = Date.now();
-  const recent = (hits.get(key) ?? []).filter((t) => now - t < windowMs);
-  if (recent.length >= limit) {
-    hits.set(key, recent);
-    return true;
+const limiters = new Map<string, Ratelimit>();
+
+function getLimiter(limit: number, windowMs: number): Ratelimit {
+  const cacheKey = `${limit}:${windowMs}`;
+  let limiter = limiters.get(cacheKey);
+  if (!limiter) {
+    limiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(limit, `${windowMs / 1000} s`),
+      prefix: "ratelimit",
+      analytics: false,
+    });
+    limiters.set(cacheKey, limiter);
   }
-  recent.push(now);
-  hits.set(key, recent);
-  return false;
+  return limiter;
+}
+
+// Redis-backed so limits actually hold across Vercel's ephemeral serverless
+// instances — the previous in-memory Map only limited requests hitting the
+// same warm instance, which on serverless is close to no protection at all.
+export async function isRateLimited(key: string, limit: number, windowMs: number): Promise<boolean> {
+  const { success } = await getLimiter(limit, windowMs).limit(key);
+  return !success;
 }
 
 export function getClientIp(request: NextRequest): string {

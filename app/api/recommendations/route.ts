@@ -1,12 +1,15 @@
 import { randomUUID } from "crypto";
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { detectCategory } from "@/lib/detectCategory";
 import { matchesImageSignature } from "@/lib/imageSignature";
 import { uploadImage } from "@/lib/storage";
+import { RECOMMENDATIONS_TAG } from "@/lib/recommendations";
 import {
   MAX_DISH_NAME_LENGTH,
   MAX_NOTES_LENGTH,
+  MAX_PHOTOS_PER_RECOMMENDATION,
   MAX_PRICE,
   MAX_RESTAURANT_NAME_LENGTH,
   MAX_REVIEWER_NAME_LENGTH,
@@ -26,7 +29,7 @@ const ALLOWED_TYPES: Record<string, string> = {
 };
 
 export async function POST(request: NextRequest) {
-  if (isRateLimited(`submit:${getClientIp(request)}`, SUBMIT_LIMIT, SUBMIT_WINDOW_MS)) {
+  if (await isRateLimited(`submit:${getClientIp(request)}`, SUBMIT_LIMIT, SUBMIT_WINDOW_MS)) {
     return NextResponse.json(
       { error: "Too many submissions. Please try again later." },
       { status: 429 },
@@ -41,7 +44,7 @@ export async function POST(request: NextRequest) {
   const priceRaw = formData.get("price");
   const reviewerName = formData.get("reviewerName");
   const notes = formData.get("notes");
-  const image = formData.get("image");
+  const images = formData.getAll("images").filter((f): f is File => f instanceof File && f.size > 0);
 
   if (typeof dishName !== "string" || !dishName.trim()) {
     return NextResponse.json({ error: "Dish name is required." }, { status: 400 });
@@ -105,25 +108,36 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
-  if (!(image instanceof File) || image.size === 0) {
-    return NextResponse.json({ error: "An image is required." }, { status: 400 });
+  if (images.length === 0) {
+    return NextResponse.json({ error: "At least one photo is required." }, { status: 400 });
   }
-  if (image.size > MAX_IMAGE_BYTES) {
-    return NextResponse.json({ error: "Image must be smaller than 5MB." }, { status: 400 });
-  }
-  const extension = ALLOWED_TYPES[image.type];
-  if (!extension) {
+  if (images.length > MAX_PHOTOS_PER_RECOMMENDATION) {
     return NextResponse.json(
-      { error: "Image must be JPEG, PNG, WEBP, or GIF." },
+      { error: `You can upload at most ${MAX_PHOTOS_PER_RECOMMENDATION} photos.` },
       { status: 400 },
     );
   }
-  const bytes = Buffer.from(await image.arrayBuffer());
-  if (!matchesImageSignature(bytes, image.type)) {
-    return NextResponse.json(
-      { error: "File content doesn't match a valid JPEG, PNG, WEBP, or GIF image." },
-      { status: 400 },
-    );
+
+  const photoUploads: { bytes: Buffer; extension: string; type: string }[] = [];
+  for (const image of images) {
+    if (image.size > MAX_IMAGE_BYTES) {
+      return NextResponse.json({ error: "Each photo must be smaller than 5MB." }, { status: 400 });
+    }
+    const extension = ALLOWED_TYPES[image.type];
+    if (!extension) {
+      return NextResponse.json(
+        { error: "Photos must be JPEG, PNG, WEBP, or GIF." },
+        { status: 400 },
+      );
+    }
+    const bytes = Buffer.from(await image.arrayBuffer());
+    if (!matchesImageSignature(bytes, image.type)) {
+      return NextResponse.json(
+        { error: "File content doesn't match a valid JPEG, PNG, WEBP, or GIF image." },
+        { status: 400 },
+      );
+    }
+    photoUploads.push({ bytes, extension, type: image.type });
   }
 
   const dishNameTrimmed = dishName.trim();
@@ -144,8 +158,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const filename = `${randomUUID()}.${extension}`;
-  const imageUrl = await uploadImage(bytes, filename, image.type);
+  const photoUrls = await Promise.all(
+    photoUploads.map(({ bytes, extension, type }) =>
+      uploadImage(bytes, `${randomUUID()}.${extension}`, type),
+    ),
+  );
 
   const editToken = randomUUID();
   const recommendation = await prisma.recommendation.create({
@@ -154,13 +171,21 @@ export async function POST(request: NextRequest) {
       category: detectCategory(dishName),
       rating,
       price,
-      imageUrl,
       restaurantName: restaurantNameTrimmed,
       reviewerName: typeof reviewerName === "string" && reviewerName.trim() ? reviewerName.trim() : null,
       notes: typeof notes === "string" && notes.trim() ? notes.trim() : null,
       editToken,
+      photos: {
+        create: photoUrls.map((url, index) => ({
+          url,
+          order: index,
+          isPrimary: index === 0,
+        })),
+      },
     },
   });
+
+  revalidateTag(RECOMMENDATIONS_TAG, { expire: 0 });
 
   return NextResponse.json(recommendation, { status: 201 });
 }

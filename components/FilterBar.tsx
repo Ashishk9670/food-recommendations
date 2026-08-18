@@ -15,7 +15,7 @@ function buildHref(
   if (category) params.set("category", category);
   if (minStars) params.set("minStars", String(minStars));
   if (maxPrice) params.set("maxPrice", String(maxPrice));
-  if (sort) params.set("sort", sort);
+  if (sort && sort !== "newest") params.set("sort", sort);
   if (q) params.set("q", q);
   const query = params.toString();
   return query ? `/?${query}` : "/";
@@ -102,7 +102,10 @@ export default function FilterBar({
         ))}
       </div>
       <div className="flex flex-wrap gap-2">
-        <FilterPill href={buildHref(category, minStars, maxPrice, undefined, q)} active={!sort}>
+        <FilterPill
+          href={buildHref(category, minStars, maxPrice, undefined, q)}
+          active={!sort || sort === "newest"}
+        >
           Newest
         </FilterPill>
         <FilterPill href={buildHref(category, minStars, maxPrice, "liked", q)} active={sort === "liked"}>
@@ -110,6 +113,12 @@ export default function FilterBar({
         </FilterPill>
         <FilterPill href={buildHref(category, minStars, maxPrice, "rating", q)} active={sort === "rating"}>
           Highest rated
+        </FilterPill>
+        <FilterPill
+          href={buildHref(category, minStars, maxPrice, "trending", q)}
+          active={sort === "trending"}
+        >
+          Trending
         </FilterPill>
       </div>
     </div>

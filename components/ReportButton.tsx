@@ -25,6 +25,9 @@ export default function ReportButton({ id, className = "" }: { id: number; class
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    // localStorage is unavailable during SSR, so this can't be a lazy useState
+    // initializer without causing a hydration mismatch — it has to run after mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReported(getReportedIds().has(id));
   }, [id]);
 

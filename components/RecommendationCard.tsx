@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import CategoryBadge from "./CategoryBadge";
 import LikeButton from "./LikeButton";
 import OwnerActions from "./OwnerActions";
@@ -11,7 +12,7 @@ type RecommendationCardProps = {
   category: string;
   rating: number;
   price: number;
-  imageUrl: string;
+  primaryPhotoUrl: string;
   likeCount: number;
   restaurantName?: string | null;
   reviewerName?: string | null;
@@ -24,7 +25,7 @@ export default function RecommendationCard({
   category,
   rating,
   price,
-  imageUrl,
+  primaryPhotoUrl,
   likeCount,
   restaurantName,
   reviewerName,
@@ -32,18 +33,24 @@ export default function RecommendationCard({
 }: RecommendationCardProps) {
   return (
     <div className="overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm transition-shadow hover:shadow-lg">
-      <div className="relative aspect-[4/3] w-full bg-orange-50">
-        <Image
-          src={imageUrl}
-          alt={dishName}
-          fill
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-        />
-      </div>
+      <Link href={`/recommendation/${id}`} className="block">
+        <div className="relative aspect-[4/3] w-full bg-orange-50">
+          <Image
+            src={primaryPhotoUrl}
+            alt={dishName}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
+        </div>
+      </Link>
       <div className="space-y-2 p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-2 break-words font-semibold text-stone-900">{dishName}</h3>
+          <Link href={`/recommendation/${id}`} className="min-w-0">
+            <h3 className="line-clamp-2 break-words font-semibold text-stone-900 hover:underline">
+              {dishName}
+            </h3>
+          </Link>
           <CategoryBadge category={category} />
         </div>
         {restaurantName && (

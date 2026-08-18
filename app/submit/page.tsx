@@ -8,6 +8,7 @@ import { detectCategory } from "@/lib/detectCategory";
 import {
   MAX_DISH_NAME_LENGTH,
   MAX_NOTES_LENGTH,
+  MAX_PHOTOS_PER_RECOMMENDATION,
   MAX_PRICE,
   MAX_RESTAURANT_NAME_LENGTH,
   MAX_REVIEWER_NAME_LENGTH,
@@ -23,17 +24,17 @@ export default function SubmitPage() {
   const [price, setPrice] = useState("");
   const [reviewerName, setReviewerName] = useState("");
   const [notes, setNotes] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const detectedCategory = useMemo(() => detectCategory(dishName), [dishName]);
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
-    setImageFile(file);
-    setPreviewUrl(file ? URL.createObjectURL(file) : null);
+    const files = Array.from(e.target.files ?? []).slice(0, MAX_PHOTOS_PER_RECOMMENDATION);
+    setImageFiles(files);
+    setPreviewUrls(files.map((file) => URL.createObjectURL(file)));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -71,8 +72,8 @@ export default function SubmitPage() {
       setError(`Please enter a valid price (numbers only) between 0 and ${MAX_PRICE}.`);
       return;
     }
-    if (!imageFile) {
-      setError("Please choose a photo.");
+    if (imageFiles.length === 0) {
+      setError("Please choose at least one photo.");
       return;
     }
 
@@ -83,7 +84,9 @@ export default function SubmitPage() {
     formData.set("price", price);
     formData.set("reviewerName", reviewerName);
     formData.set("notes", notes);
-    formData.set("image", imageFile);
+    for (const file of imageFiles) {
+      formData.append("images", file);
+    }
 
     setSubmitting(true);
     try {
@@ -170,22 +173,28 @@ export default function SubmitPage() {
 
         <div>
           <label htmlFor="photo" className="mb-1 block text-sm font-medium text-stone-700">
-            Photo
+            Photos <span className="text-stone-400">(up to {MAX_PHOTOS_PER_RECOMMENDATION})</span>
           </label>
           <input
             id="photo"
             type="file"
             accept="image/jpeg,image/png,image/webp,image/gif"
+            multiple
             onChange={handleImageChange}
             className="w-full text-sm"
           />
-          {previewUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="mt-3 h-48 w-full rounded-lg object-cover"
-            />
+          {previewUrls.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {previewUrls.map((url, index) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={url}
+                  src={url}
+                  alt={`Preview ${index + 1}`}
+                  className="h-24 w-24 rounded-lg object-cover"
+                />
+              ))}
+            </div>
           )}
         </div>
 

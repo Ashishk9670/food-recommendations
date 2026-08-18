@@ -17,16 +17,59 @@ model Recommendation {
   rating         Int
   // default lets this NOT NULL column backfill existing rows; the app always supplies a real value on create
   price          Float    @default(0)
-  imageUrl       String
   // default lets this NOT NULL column backfill existing rows; the app always supplies a real value on create
   restaurantName String   @default("")
   reviewerName   String?
   notes          String?
   likeCount      Int      @default(0)
+  // denormalized live count, mirrored by undismissed Report rows below; reset to 0 when an admin dismisses reports
   reportCount    Int      @default(0)
   // secret token generated at creation time; lets the submitter's browser edit/delete later with no real accounts
   editToken      String   @default("")
   createdAt      DateTime @default(now())
+
+  photos   Photo[]
+  comments Comment[]
+  reports  Report[]
+
+  @@index([createdAt])
+  @@index([likeCount])
+}
+
+model Photo {
+  id               Int      @id @default(autoincrement())
+  recommendationId Int
+  recommendation   Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  url              String
+  // display/upload order; order 0 is the cover photo shown on the browse-grid card
+  order            Int      @default(0)
+  isPrimary        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@index([recommendationId, order])
+}
+
+model Comment {
+  id               Int      @id @default(autoincrement())
+  recommendationId Int
+  recommendation   Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  authorName       String?
+  body             String
+  createdAt        DateTime @default(now())
+
+  @@index([recommendationId, createdAt])
+}
+
+model Report {
+  id               Int      @id @default(autoincrement())
+  recommendationId Int
+  recommendation   Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  // sha256 of the reporter's IP, kept for future abuse analysis — nullable so a failure to read IP never blocks a report
+  reporterIpHash   String?
+  dismissed        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@index([recommendationId, dismissed])
 }
 
 model DeletionLog {

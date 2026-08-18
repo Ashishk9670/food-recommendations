@@ -11,6 +11,9 @@ export default function OwnerActions({ id }: { id: number }) {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
+    // localStorage is unavailable during SSR, so this can't be a lazy useState
+    // initializer without causing a hydration mismatch — it has to run after mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setToken(getOwnerToken(id) ?? null);
   }, [id]);
 

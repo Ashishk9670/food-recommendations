@@ -49,3 +49,8 @@ next-env.d.ts
 # leftover local SQLite file from before the Supabase migration (unused, safe to delete)
 /dev.db
 /dev.db-journal
+
+# playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/

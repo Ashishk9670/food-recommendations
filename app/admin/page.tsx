@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import CategoryBadge from "@/components/CategoryBadge";
@@ -17,22 +18,38 @@ export default async function AdminPage() {
 
   const recommendations = await prisma.recommendation.findMany({
     orderBy: { createdAt: "desc" },
+    include: { photos: { where: { isPrimary: true }, take: 1 } },
   });
+  const reportedCount = recommendations.filter((rec) => rec.reportCount > 0).length;
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-slate-900">
           Admin Dashboard ({recommendations.length})
         </h1>
-        <form action="/api/admin/logout" method="post">
-          <button
-            type="submit"
+        <div className="flex items-center gap-4">
+          <Link
+            href="/admin/reports"
             className="text-sm font-medium text-slate-500 underline hover:text-slate-900"
           >
-            Log out
-          </button>
-        </form>
+            Moderation queue{reportedCount > 0 ? ` (${reportedCount})` : ""}
+          </Link>
+          <a
+            href="/api/admin/export"
+            className="text-sm font-medium text-slate-500 underline hover:text-slate-900"
+          >
+            Export CSV
+          </a>
+          <form action="/api/admin/logout" method="post">
+            <button
+              type="submit"
+              className="text-sm font-medium text-slate-500 underline hover:text-slate-900"
+            >
+              Log out
+            </button>
+          </form>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -42,7 +59,9 @@ export default async function AdminPage() {
             className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:gap-4"
           >
             <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100">
-              <Image src={rec.imageUrl} alt={rec.dishName} fill className="object-cover" sizes="64px" />
+              {rec.photos[0] && (
+                <Image src={rec.photos[0].url} alt={rec.dishName} fill className="object-cover" sizes="64px" />
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">

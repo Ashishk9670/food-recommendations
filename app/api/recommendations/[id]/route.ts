@@ -1,9 +1,11 @@
 import { cookies } from "next/headers";
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_COOKIE, isValidAdminToken } from "@/lib/admin";
 import { prisma } from "@/lib/db";
 import { detectCategory } from "@/lib/detectCategory";
 import { deleteImage } from "@/lib/storage";
+import { RECOMMENDATIONS_TAG } from "@/lib/recommendations";
 import {
   MAX_DISH_NAME_LENGTH,
   MAX_NOTES_LENGTH,
@@ -19,7 +21,7 @@ const RECOMMENDATION_PUBLIC_SELECT = {
   category: true,
   rating: true,
   price: true,
-  imageUrl: true,
+  photos: { orderBy: { order: "asc" as const } },
   restaurantName: true,
   reviewerName: true,
   notes: true,
@@ -152,6 +154,8 @@ export async function PATCH(
     select: RECOMMENDATION_PUBLIC_SELECT,
   });
 
+  revalidateTag(RECOMMENDATIONS_TAG, { expire: 0 });
+
   return NextResponse.json(updated);
 }
 
@@ -167,6 +171,7 @@ export async function DELETE(
 
   const recommendation = await prisma.recommendation.findUnique({
     where: { id: recommendationId },
+    include: { photos: true },
   });
   if (!recommendation) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
@@ -186,7 +191,9 @@ export async function DELETE(
     data: { dishName: recommendation.dishName, restaurantName: recommendation.restaurantName },
   });
 
-  await deleteImage(recommendation.imageUrl).catch(() => {});
+  await Promise.all(recommendation.photos.map((photo) => deleteImage(photo.url).catch(() => {})));
+
+  revalidateTag(RECOMMENDATIONS_TAG, { expire: 0 });
 
   return NextResponse.json({ ok: true });
 }

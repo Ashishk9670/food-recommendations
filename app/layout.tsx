@@ -45,9 +45,14 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-orange-50">
         <header className="bg-gradient-to-r from-orange-600 to-rose-600 shadow-sm">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-4">
-            <Link href="/" className="whitespace-nowrap text-base font-bold text-white sm:text-lg">
-              <span className="sm:hidden">🍽️ Food Recs</span>
-              <span className="hidden sm:inline">🍽️ Food Recommendations</span>
+            <Link href="/" className="flex flex-col whitespace-nowrap leading-tight text-white">
+              <span className="text-base font-bold sm:text-lg">
+                <span className="sm:hidden">🍽️ Food Recs</span>
+                <span className="hidden sm:inline">🍽️ Food Recommendations</span>
+              </span>
+              <span className="text-[10px] font-medium italic text-orange-100/80 sm:text-xs">
+                for Triomics, by Triomics
+              </span>
             </Link>
             <Link
               href="/submit"

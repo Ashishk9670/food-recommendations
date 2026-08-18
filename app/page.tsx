@@ -1,13 +1,21 @@
 import Link from "next/link";
+import type { Prisma } from "@/app/generated/prisma/client";
 import FilterBar from "@/components/FilterBar";
 import Pagination from "@/components/Pagination";
 import RecommendationCard from "@/components/RecommendationCard";
 import { CATEGORIES } from "@/lib/categories";
-import { prisma } from "@/lib/db";
-
-export const dynamic = "force-dynamic";
-
-const PAGE_SIZE = 12;
+import { getRecommendationsPage } from "@/lib/recommendations";
+import {
+  PAGE_SIZE,
+  buildSeekWhere,
+  cursorFromRow,
+  decodeCursor,
+  encodeCursor,
+  getOrderBy,
+  reverseOrderBy,
+  startOfIsoWeek,
+  type SortMode,
+} from "@/lib/pagination";
 
 type HomeProps = {
   searchParams: Promise<{
@@ -16,7 +24,8 @@ type HomeProps = {
     maxPrice?: string;
     sort?: string;
     q?: string;
-    page?: string;
+    after?: string;
+    before?: string;
   }>;
 };
 
@@ -28,34 +37,47 @@ export default async function Home({ searchParams }: HomeProps) {
       : undefined;
   const minStars = params.minStars ? Number(params.minStars) : undefined;
   const maxPrice = params.maxPrice ? Number(params.maxPrice) : undefined;
-  const sort = params.sort === "liked" || params.sort === "rating" ? params.sort : undefined;
+  const sort: SortMode =
+    params.sort === "liked" || params.sort === "rating" || params.sort === "trending"
+      ? params.sort
+      : "newest";
   const q = params.q?.trim() || undefined;
-  const page = Math.max(1, Number(params.page) || 1);
 
-  const where = {
-    ...(category ? { category } : {}),
-    ...(minStars ? { rating: { gte: minStars } } : {}),
-    ...(maxPrice ? { price: { lte: maxPrice } } : {}),
-    ...(q ? { OR: [{ dishName: { contains: q } }, { restaurantName: { contains: q } }] } : {}),
-  };
+  const afterCursor = decodeCursor(params.after);
+  const beforeCursor = decodeCursor(params.before);
+  const cursor = beforeCursor ?? afterCursor;
+  const wantAfter = !beforeCursor && !!afterCursor;
 
-  const orderBy =
-    sort === "liked"
-      ? [{ likeCount: "desc" as const }, { createdAt: "desc" as const }]
-      : sort === "rating"
-        ? [{ rating: "desc" as const }, { createdAt: "desc" as const }]
-        : { createdAt: "desc" as const };
+  const andConditions: Prisma.RecommendationWhereInput[] = [];
+  if (category) andConditions.push({ category });
+  if (minStars) andConditions.push({ rating: { gte: minStars } });
+  if (maxPrice) andConditions.push({ price: { lte: maxPrice } });
+  if (sort === "trending") andConditions.push({ createdAt: { gte: startOfIsoWeek() } });
+  if (q) {
+    andConditions.push({
+      OR: [
+        { dishName: { contains: q, mode: "insensitive" } },
+        { restaurantName: { contains: q, mode: "insensitive" } },
+      ],
+    });
+  }
+  if (cursor) andConditions.push(buildSeekWhere(sort, cursor, wantAfter));
 
-  const [recommendations, totalCount] = await Promise.all([
-    prisma.recommendation.findMany({
-      where,
-      orderBy,
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-    }),
-    prisma.recommendation.count({ where }),
-  ]);
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const where: Prisma.RecommendationWhereInput = andConditions.length ? { AND: andConditions } : {};
+  const baseOrderBy = getOrderBy(sort);
+  const orderBy = beforeCursor ? reverseOrderBy(baseOrderBy) : baseOrderBy;
+
+  const rows = await getRecommendationsPage(where, orderBy, PAGE_SIZE + 1);
+  const hasMore = rows.length > PAGE_SIZE;
+  const pageRows = rows.slice(0, PAGE_SIZE);
+  const recommendations = beforeCursor ? pageRows.slice().reverse() : pageRows;
+
+  const hasNext = beforeCursor ? true : hasMore;
+  const hasPrevious = beforeCursor ? hasMore : Boolean(afterCursor);
+  const firstRow = recommendations[0];
+  const lastRow = recommendations[recommendations.length - 1];
+  const prevCursor = firstRow ? encodeCursor(cursorFromRow(firstRow)) : undefined;
+  const nextCursor = lastRow ? encodeCursor(cursorFromRow(lastRow)) : undefined;
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8">
@@ -67,7 +89,7 @@ export default async function Home({ searchParams }: HomeProps) {
           {category && <input type="hidden" name="category" value={category} />}
           {minStars && <input type="hidden" name="minStars" value={minStars} />}
           {maxPrice && <input type="hidden" name="maxPrice" value={maxPrice} />}
-          {sort && <input type="hidden" name="sort" value={sort} />}
+          {sort !== "newest" && <input type="hidden" name="sort" value={sort} />}
           <input
             type="text"
             name="q"
@@ -103,7 +125,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 category={rec.category}
                 rating={rec.rating}
                 price={rec.price}
-                imageUrl={rec.imageUrl}
+                primaryPhotoUrl={rec.photos[0]?.url ?? ""}
                 likeCount={rec.likeCount}
                 restaurantName={rec.restaurantName}
                 reviewerName={rec.reviewerName}
@@ -112,8 +134,10 @@ export default async function Home({ searchParams }: HomeProps) {
             ))}
           </div>
           <Pagination
-            page={page}
-            totalPages={totalPages}
+            hasNext={hasNext}
+            hasPrevious={hasPrevious}
+            nextCursor={nextCursor}
+            prevCursor={prevCursor}
             category={category}
             minStars={minStars}
             maxPrice={maxPrice}

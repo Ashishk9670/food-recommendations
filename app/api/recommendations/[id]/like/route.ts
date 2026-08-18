@@ -1,5 +1,7 @@
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { RECOMMENDATIONS_TAG } from "@/lib/recommendations";
 import { getClientIp, isRateLimited } from "@/lib/rateLimit";
 
 const LIKE_LIMIT = 30;
@@ -9,7 +11,7 @@ export async function POST(
   request: NextRequest,
   ctx: RouteContext<"/api/recommendations/[id]/like">,
 ) {
-  if (isRateLimited(`like:${getClientIp(request)}`, LIKE_LIMIT, LIKE_WINDOW_MS)) {
+  if (await isRateLimited(`like:${getClientIp(request)}`, LIKE_LIMIT, LIKE_WINDOW_MS)) {
     return NextResponse.json({ error: "Too many requests. Slow down." }, { status: 429 });
   }
 
@@ -29,6 +31,8 @@ export async function POST(
   if (!recommendation) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
+
+  revalidateTag(RECOMMENDATIONS_TAG, { expire: 0 });
 
   return NextResponse.json({ likeCount: recommendation.likeCount });
 }
