@@ -1,6 +1,6 @@
 import path from "node:path";
 import { expect, test } from "@playwright/test";
-import { closeDb, deleteRecommendationsByPrefix } from "./helpers/db";
+import { deleteRecommendationsByPrefix } from "./helpers/db";
 import { TEST_PREFIX, uniqueDishName, uniqueRestaurantName } from "./helpers/names";
 
 const TEST_IMAGE = path.join(__dirname, "fixtures/test-dish.png");
@@ -13,7 +13,6 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD!;
 // of where the test failed.
 test.afterAll(async () => {
   await deleteRecommendationsByPrefix(TEST_PREFIX);
-  await closeDb();
 });
 
 // This is the only spec that hits the real POST /api/recommendations endpoint

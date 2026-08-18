@@ -49,6 +49,10 @@ export async function deleteRecommendationsByPrefix(prefix: string): Promise<voi
   await bustRecommendationsCache();
 }
 
-export async function closeDb(): Promise<void> {
-  await pool.end();
-}
+// Deliberately no closeDb()/pool.end() export: this pool is a module-level
+// singleton shared by every spec file that imports it. Playwright can (and on
+// CI, does) schedule multiple spec files' afterAll hooks onto the same worker
+// process one after another — if one file ended the shared pool, the next
+// file's afterAll would crash with "Cannot use a pool after calling end on the
+// pool" trying to run its own cleanup. The worker process's own teardown
+// closes the connection when it exits; no per-file close is needed or safe.

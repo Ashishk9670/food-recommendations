@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { closeDb, deleteRecommendationsByPrefix, seedRecommendations } from "./helpers/db";
+import { deleteRecommendationsByPrefix, seedRecommendations } from "./helpers/db";
 
 // Trigram-distinct from happy-path.spec.ts's "Zzztest" prefix on purpose —
 // fuzzy (word_similarity-based) search means two prefixes sharing even a
@@ -52,7 +52,6 @@ test.describe("browse filters, search, sort, and pagination", () => {
 
   test.afterAll(async () => {
     await deleteRecommendationsByPrefix(SEED_PREFIX);
-    await closeDb();
   });
 
   test("search finds seeded rows and pagination shows exactly 12 per page", async ({

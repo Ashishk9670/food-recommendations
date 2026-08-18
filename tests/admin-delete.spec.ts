@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { closeDb, deleteRecommendationsByPrefix, seedRecommendations } from "./helpers/db";
+import { deleteRecommendationsByPrefix, seedRecommendations } from "./helpers/db";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD!;
 const PREFIX = "Zzzadmindelete";
@@ -12,7 +12,6 @@ const IMAGE_URL =
 // this test needs zero submission calls, only its own real admin login.
 test.afterAll(async () => {
   await deleteRecommendationsByPrefix(PREFIX);
-  await closeDb();
 });
 
 test("admin can delete a recommendation from the dashboard", async ({ page }) => {
