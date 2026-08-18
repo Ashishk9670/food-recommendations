@@ -24,6 +24,12 @@ test("full recommendation lifecycle: submit, like, report, duplicate, edit, perm
   page,
   browser,
 }) => {
+  // This single test bundles ~12 sequential steps across the whole app, each a
+  // real network round-trip to Postgres/Storage/Redis — on CI (higher latency
+  // to the ap-south-1-hosted test services than local dev) the cumulative time
+  // needs real headroom beyond the suite-wide per-test default.
+  test.setTimeout(process.env.CI ? 120_000 : 45_000);
+
   page.on("dialog", (dialog) => dialog.accept());
 
   const dishName = uniqueDishName();
