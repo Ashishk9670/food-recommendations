@@ -1,7 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { closeDb, deleteRecommendationsByPrefix, seedRecommendations } from "./helpers/db";
 
-const SEED_PREFIX = "Zzzseed";
+// Trigram-distinct from happy-path.spec.ts's "Zzztest" prefix on purpose —
+// fuzzy (word_similarity-based) search means two prefixes sharing even a
+// short common root (e.g. both starting "Zzz") can cross-match each other's
+// seeded rows, unlike the old plain `contains` substring search.
+const SEED_PREFIX = "Qxvbrowse";
 const CATEGORIES = ["Biryani", "Chicken", "Paneer", "Chinese", "Other"];
 const ROW_COUNT = 14;
 const IMAGE_URL =
@@ -10,6 +14,8 @@ const IMAGE_URL =
 function seedDishName(index: number) {
   return `${SEED_PREFIX} Dish ${index}`;
 }
+
+const FUZZY_TARGET_DISH_NAME = `${SEED_PREFIX} Chicken Biryani Special`;
 
 // This spec needs >12 rows to exercise pagination, which the real submission
 // rate limit (5/10min) can't afford — so it seeds directly into the test
@@ -28,6 +34,19 @@ test.describe("browse filters, search, sort, and pagination", () => {
       imageUrl: IMAGE_URL,
       createdAt: new Date(now - index * 60_000),
     }));
+    rows.push({
+      // rating 3 (not 4/5) and price 300 (not under any filter threshold) so
+      // this row never interferes with the star/price/sort assertions below —
+      // it exists purely to test fuzzy search matching.
+      dishName: FUZZY_TARGET_DISH_NAME,
+      restaurantName: `${SEED_PREFIX} Spice House`,
+      category: "Biryani",
+      rating: 3,
+      price: 300,
+      likeCount: 0,
+      imageUrl: IMAGE_URL,
+      createdAt: new Date(now),
+    });
     await seedRecommendations(rows);
   });
 
@@ -42,14 +61,14 @@ test.describe("browse filters, search, sort, and pagination", () => {
     await page.goto("/");
     await page.getByPlaceholder("Search by dish or restaurant...").fill(SEED_PREFIX);
     await page.getByRole("button", { name: "Search" }).click();
-    await page.waitForURL(/q=Zzzseed/);
+    await page.waitForURL(/q=Qxvbrowse/);
 
     await expect(page.locator(".grid.gap-5 > div")).toHaveCount(12);
     await expect(page.getByRole("link", { name: "← Previous" })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Next →" })).toHaveCount(1);
 
     await page.getByRole("link", { name: "Next →" }).click();
-    await expect(page.locator(".grid.gap-5 > div")).toHaveCount(2);
+    await expect(page.locator(".grid.gap-5 > div")).toHaveCount(3); // 15 seeded rows total (14 + 1 fuzzy-search target)
     await expect(page.getByRole("link", { name: "Next →" })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "← Previous" })).toHaveCount(1);
 
@@ -117,6 +136,26 @@ test.describe("browse filters, search, sort, and pagination", () => {
     // the current ISO week), so trending should order them exactly like "Most liked".
     const firstCard = page.locator(".grid.gap-5 > div").first();
     await expect(firstCard.getByRole("heading", { name: seedDishName(13) })).toBeVisible();
+  });
+
+  test("search tolerates a typo via trigram fuzzy matching", async ({ page }) => {
+    // "Biryni" is a misspelling of "Biryani" — never a literal substring of
+    // FUZZY_TARGET_DISH_NAME, so this only passes if the pg_trgm-backed
+    // word_similarity() fallback (not just the plain ILIKE match) is working.
+    await page.goto(`/?q=${encodeURIComponent(`${SEED_PREFIX} Biryni`)}`);
+    await expect(
+      page.getByRole("heading", { name: FUZZY_TARGET_DISH_NAME }),
+    ).toBeVisible();
+  });
+
+  test("search does not match a completely unrelated query", async ({ page }) => {
+    // Deliberately does NOT share the SEED_PREFIX with any seeded row —
+    // word_similarity() scores the whole query string, so a shared common word
+    // (like a prefix every seeded row happens to share) inflates the score on
+    // its own even when the rest of the query is gibberish. A single-word,
+    // wholly-unrelated query is the fair test of "does this really not match."
+    await page.goto(`/?q=${encodeURIComponent("Xqzvthwplmbfoobarnoise")}`);
+    await expect(page.getByText("No recommendations match these filters yet.")).toBeVisible();
   });
 
   test("empty state shows when filters match nothing", async ({ page }) => {

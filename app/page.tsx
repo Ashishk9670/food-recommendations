@@ -4,7 +4,7 @@ import FilterBar from "@/components/FilterBar";
 import Pagination from "@/components/Pagination";
 import RecommendationCard from "@/components/RecommendationCard";
 import { CATEGORIES } from "@/lib/categories";
-import { getRecommendationsPage } from "@/lib/recommendations";
+import { findMatchingRecommendationIds, getRecommendationsPage } from "@/lib/recommendations";
 import {
   PAGE_SIZE,
   buildSeekWhere,
@@ -54,12 +54,8 @@ export default async function Home({ searchParams }: HomeProps) {
   if (maxPrice) andConditions.push({ price: { lte: maxPrice } });
   if (sort === "trending") andConditions.push({ createdAt: { gte: startOfIsoWeek() } });
   if (q) {
-    andConditions.push({
-      OR: [
-        { dishName: { contains: q, mode: "insensitive" } },
-        { restaurantName: { contains: q, mode: "insensitive" } },
-      ],
-    });
+    const matchingIds = await findMatchingRecommendationIds(q);
+    andConditions.push({ id: { in: matchingIds } });
   }
   if (cursor) andConditions.push(buildSeekWhere(sort, cursor, wantAfter));
 
