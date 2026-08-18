@@ -181,7 +181,7 @@ export default function SubmitPage() {
             accept="image/jpeg,image/png,image/webp,image/gif"
             multiple
             onChange={handleImageChange}
-            className="w-full text-sm"
+            className="block w-full cursor-pointer rounded-lg border border-dashed border-orange-300 bg-orange-50/50 text-sm text-stone-500 file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-orange-600 file:px-4 file:py-2.5 file:text-sm file:font-medium file:text-white file:transition-colors hover:file:bg-orange-700"
           />
           {previewUrls.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">

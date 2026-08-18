@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 // Only ONE real call to /api/admin/login happens in this file (the wrong-password
-// attempt) — the "correct password" path is exercised once, in happy-path.spec.ts,
-// so the whole suite's admin-login rate-limit usage (5/15min) stays small enough
-// to survive two back-to-back full-suite runs.
+// attempt) — the "correct password" path is exercised in happy-path.spec.ts and
+// admin-delete.spec.ts. That's 3 real logins per full suite run (5/15min limit),
+// so the suite is safely re-runnable once per 15 minutes, not twice.
 test.describe("admin authentication", () => {
   test("visiting /admin while logged out redirects to the login page", async ({ page }) => {
     await page.goto("/admin");

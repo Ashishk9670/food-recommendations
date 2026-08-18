@@ -16,10 +16,12 @@ test.afterAll(async () => {
   await closeDb();
 });
 
-// This is the only spec that hits the real POST /api/recommendations and
-// /api/admin/login endpoints, kept to 2 and 1 calls respectively so the whole
-// rate-limited suite stays comfortably under the real limits (5/10min, 5/15min)
-// even across two back-to-back runs.
+// This is the only spec that hits the real POST /api/recommendations endpoint
+// (2 calls) — submissions stay comfortably under the 5/10min limit even across
+// two back-to-back runs. This file's 1 real admin login, combined with
+// admin-auth.spec.ts's 1 and admin-delete.spec.ts's 1 (3 total per run), means
+// the 5/15min admin-login limit is the tighter budget: safely re-runnable once
+// per 15 minutes, not twice.
 test("full recommendation lifecycle: submit, like, report, duplicate, edit, permissions, admin delete", async ({
   page,
   browser,
