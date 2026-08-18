@@ -15,6 +15,13 @@ export default defineConfig({
   timeout: process.env.CI ? 45_000 : 30_000,
   reporter: "html",
   globalSetup: "./tests/global-setup.ts",
+  // The GitHub Actions runner is geographically far from the test Supabase
+  // project/storage bucket (both in ap-south-1), so a single web-first
+  // assertion can need more than the 5s default to see the effect of a chain
+  // of sequential network round-trips (e.g. delete -> revalidate -> re-render).
+  expect: {
+    timeout: process.env.CI ? 15_000 : 5_000,
+  },
   use: {
     baseURL,
     trace: "on-first-retry",
