@@ -8,7 +8,11 @@ const baseURL = `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: "./tests",
-  workers: 4,
+  // Shared GitHub Actions runners have far fewer effective cores than a local
+  // dev machine — fewer workers and a longer per-test timeout avoid the
+  // resource-contention timeouts that showed up on the first real CI run.
+  workers: process.env.CI ? 2 : 4,
+  timeout: process.env.CI ? 45_000 : 30_000,
   reporter: "html",
   globalSetup: "./tests/global-setup.ts",
   use: {
