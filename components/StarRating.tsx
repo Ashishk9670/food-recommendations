@@ -31,9 +31,11 @@ export default function StarRating({
             readOnly
               ? star <= value
                 ? "text-amber-400"
-                : "text-gray-300"
+                : "text-gray-300 dark:text-stone-600"
               : `inline-block cursor-pointer transition-colors ${tapPadding} ${
-                  star <= value ? "text-amber-400" : "text-gray-300 hover:text-amber-300"
+                  star <= value
+                    ? "text-amber-400"
+                    : "text-gray-300 hover:text-amber-300 dark:text-stone-600 dark:hover:text-amber-400"
                 }`
           }
         >

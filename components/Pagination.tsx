@@ -40,22 +40,22 @@ export default function Pagination({
       {hasPrevious ? (
         <Link
           href={buildHref("prev", prevCursor)}
-          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-stone-600 ring-1 ring-orange-100 hover:bg-orange-100"
+          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-stone-600 ring-1 ring-orange-100 hover:bg-orange-100 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700 dark:hover:bg-stone-800"
         >
           ← Previous
         </Link>
       ) : (
-        <span className="rounded-lg px-4 py-2 text-sm font-medium text-stone-300">← Previous</span>
+        <span className="rounded-lg px-4 py-2 text-sm font-medium text-stone-300 dark:text-stone-700">← Previous</span>
       )}
       {hasNext ? (
         <Link
           href={buildHref("next", nextCursor)}
-          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-stone-600 ring-1 ring-orange-100 hover:bg-orange-100"
+          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-stone-600 ring-1 ring-orange-100 hover:bg-orange-100 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700 dark:hover:bg-stone-800"
         >
           Next →
         </Link>
       ) : (
-        <span className="rounded-lg px-4 py-2 text-sm font-medium text-stone-300">Next →</span>
+        <span className="rounded-lg px-4 py-2 text-sm font-medium text-stone-300 dark:text-stone-700">Next →</span>
       )}
     </div>
   );

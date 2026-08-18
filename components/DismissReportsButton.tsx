@@ -27,7 +27,7 @@ export default function DismissReportsButton({ id }: { id: number }) {
       type="button"
       onClick={handleDismiss}
       disabled={dismissing}
-      className="rounded-lg bg-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition-opacity hover:opacity-90 disabled:opacity-50"
+      className="rounded-lg bg-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition-opacity hover:opacity-90 disabled:opacity-50 dark:bg-slate-700 dark:text-slate-200"
     >
       {dismissing ? "Dismissing..." : "Dismiss reports"}
     </button>

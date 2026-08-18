@@ -24,7 +24,7 @@ export default function DeleteRecommendationButton({ id }: { id: number }) {
     <button
       onClick={handleDelete}
       disabled={deleting}
-      className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+      className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50 dark:bg-red-700"
     >
       {deleting ? "Deleting..." : "Delete"}
     </button>

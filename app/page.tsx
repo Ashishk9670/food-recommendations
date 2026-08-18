@@ -78,7 +78,7 @@ export default async function Home({ searchParams }: HomeProps) {
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8">
       <div className="mb-6 space-y-4">
-        <h1 className="text-2xl font-bold text-stone-900">
+        <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
           Browse Recommendations
         </h1>
         <form action="/" method="get" className="flex gap-2">
@@ -91,7 +91,7 @@ export default async function Home({ searchParams }: HomeProps) {
             name="q"
             defaultValue={q}
             placeholder="Search by dish or restaurant..."
-            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
           />
           <button
             type="submit"
@@ -104,9 +104,9 @@ export default async function Home({ searchParams }: HomeProps) {
       </div>
 
       {recommendations.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-orange-200 bg-white/60 py-16 text-center text-stone-500">
+        <div className="rounded-2xl border border-dashed border-orange-200 bg-white/60 py-16 text-center text-stone-500 dark:border-stone-700 dark:bg-stone-900/60 dark:text-stone-400">
           <p className="mb-3">No recommendations match these filters yet.</p>
-          <Link href="/submit" className="font-medium text-orange-600 underline">
+          <Link href="/submit" className="font-medium text-orange-600 underline dark:text-orange-400">
             Be the first to submit one
           </Link>
         </div>

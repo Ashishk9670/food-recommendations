@@ -66,14 +66,16 @@ export default function EditPage() {
   }, [id]);
 
   if (token === undefined || loading) {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-stone-500">Loading…</div>;
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center text-stone-500 dark:text-stone-400">Loading…</div>
+    );
   }
 
   if (!token) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <p className="text-stone-700">You don&apos;t have permission to edit this post.</p>
-        <Link href="/" className="mt-4 inline-block font-medium text-orange-600 underline">
+        <p className="text-stone-700 dark:text-stone-300">You don&apos;t have permission to edit this post.</p>
+        <Link href="/" className="mt-4 inline-block font-medium text-orange-600 underline dark:text-orange-400">
           Back to Browse Recommendations
         </Link>
       </div>
@@ -83,8 +85,8 @@ export default function EditPage() {
   if (notFound) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <p className="text-stone-700">This recommendation no longer exists.</p>
-        <Link href="/" className="mt-4 inline-block font-medium text-orange-600 underline">
+        <p className="text-stone-700 dark:text-stone-300">This recommendation no longer exists.</p>
+        <Link href="/" className="mt-4 inline-block font-medium text-orange-600 underline dark:text-orange-400">
           Back to Browse Recommendations
         </Link>
       </div>
@@ -148,10 +150,10 @@ export default function EditPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold text-stone-900">Edit Your Recommendation</h1>
+      <h1 className="mb-6 text-2xl font-bold text-stone-900 dark:text-stone-100">Edit Your Recommendation</h1>
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label htmlFor="edit-dishName" className="mb-1 block text-sm font-medium text-stone-700">
+          <label htmlFor="edit-dishName" className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
             Dish name
           </label>
           <input
@@ -160,7 +162,7 @@ export default function EditPage() {
             value={dishName}
             onChange={(e) => setDishName(stripNonAlpha(e.target.value))}
             maxLength={MAX_DISH_NAME_LENGTH}
-            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
           />
           {dishName.trim() && (
             <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
@@ -170,7 +172,7 @@ export default function EditPage() {
         </div>
 
         <div>
-          <label htmlFor="edit-restaurantName" className="mb-1 block text-sm font-medium text-stone-700">
+          <label htmlFor="edit-restaurantName" className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
             Restaurant / place
           </label>
           <input
@@ -179,17 +181,17 @@ export default function EditPage() {
             value={restaurantName}
             onChange={(e) => setRestaurantName(stripNonAlpha(e.target.value))}
             maxLength={MAX_RESTAURANT_NAME_LENGTH}
-            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
           />
         </div>
 
         <div>
-          <span className="mb-1 block text-sm font-medium text-stone-700">Rating</span>
+          <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">Rating</span>
           <StarRating value={rating} onChange={setRating} size="lg" />
         </div>
 
         <div>
-          <label htmlFor="edit-price" className="mb-1 block text-sm font-medium text-stone-700">
+          <label htmlFor="edit-price" className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
             Price after discount (₹)
           </label>
           <input
@@ -200,13 +202,13 @@ export default function EditPage() {
             step="1"
             value={price}
             onChange={(e) => setPrice(stripNonPriceChars(e.target.value))}
-            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
           />
         </div>
 
         <div>
-          <label htmlFor="edit-reviewerName" className="mb-1 block text-sm font-medium text-stone-700">
-            Your name <span className="text-stone-400">(optional)</span>
+          <label htmlFor="edit-reviewerName" className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
+            Your name <span className="text-stone-400 dark:text-stone-500">(optional)</span>
           </label>
           <input
             id="edit-reviewerName"
@@ -214,13 +216,13 @@ export default function EditPage() {
             value={reviewerName}
             onChange={(e) => setReviewerName(e.target.value)}
             maxLength={MAX_REVIEWER_NAME_LENGTH}
-            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
           />
         </div>
 
         <div>
-          <label htmlFor="edit-notes" className="mb-1 block text-sm font-medium text-stone-700">
-            Notes <span className="text-stone-400">(optional)</span>
+          <label htmlFor="edit-notes" className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
+            Notes <span className="text-stone-400 dark:text-stone-500">(optional)</span>
           </label>
           <textarea
             id="edit-notes"
@@ -228,12 +230,12 @@ export default function EditPage() {
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
             maxLength={MAX_NOTES_LENGTH}
-            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
           />
         </div>
 
         {error && (
-          <p role="alert" className="text-sm text-red-600">
+          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
             {error}
           </p>
         )}

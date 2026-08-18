@@ -36,7 +36,7 @@ function FilterPill({
       className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
         active
           ? "bg-orange-600 text-white shadow-sm"
-          : "bg-white text-stone-600 ring-1 ring-orange-100 hover:bg-orange-100"
+          : "bg-white text-stone-600 ring-1 ring-orange-100 hover:bg-orange-100 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700 dark:hover:bg-stone-800"
       }`}
     >
       {children}

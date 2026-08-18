@@ -38,19 +38,19 @@ export default async function RecommendationPage({ params }: PageProps) {
         <PhotoGallery photos={recommendation.photos} alt={recommendation.dishName} />
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-2">
-            <h1 className="text-2xl font-bold text-stone-900">{recommendation.dishName}</h1>
+            <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">{recommendation.dishName}</h1>
             <CategoryBadge category={recommendation.category} />
           </div>
           {recommendation.restaurantName && (
-            <p className="text-stone-500">at {recommendation.restaurantName}</p>
+            <p className="text-stone-500 dark:text-stone-400">at {recommendation.restaurantName}</p>
           )}
           <div className="flex items-center justify-between">
             <StarRating value={recommendation.rating} readOnly />
-            <span className="text-lg font-semibold text-emerald-700">₹{recommendation.price}</span>
+            <span className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">₹{recommendation.price}</span>
           </div>
-          {recommendation.notes && <p className="text-stone-600">{recommendation.notes}</p>}
+          {recommendation.notes && <p className="text-stone-600 dark:text-stone-400">{recommendation.notes}</p>}
           {recommendation.reviewerName && (
-            <p className="text-sm text-stone-400">— {recommendation.reviewerName}</p>
+            <p className="text-sm text-stone-400 dark:text-stone-500">— {recommendation.reviewerName}</p>
           )}
           <div className="flex items-center justify-between pt-2">
             <LikeButton id={recommendation.id} initialLikeCount={recommendation.likeCount} />
@@ -61,11 +61,11 @@ export default async function RecommendationPage({ params }: PageProps) {
       </div>
 
       <div className="mt-10 space-y-4">
-        <h2 className="text-lg font-bold text-stone-900">
+        <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100">
           Comments ({recommendation.comments.length})
         </h2>
         <CommentList comments={recommendation.comments} />
-        <div className="border-t border-stone-200 pt-4">
+        <div className="border-t border-stone-200 pt-4 dark:border-stone-800">
           <CommentForm recommendationId={recommendation.id} />
         </div>
       </div>

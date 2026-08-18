@@ -110,12 +110,12 @@ export default function SubmitPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold text-stone-900">
+      <h1 className="mb-6 text-2xl font-bold text-stone-900 dark:text-stone-100">
         Recommend a Dish
       </h1>
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label htmlFor="dishName" className="mb-1 block text-sm font-medium text-stone-700">
+          <label htmlFor="dishName" className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
             Dish name
           </label>
           <input
@@ -125,7 +125,7 @@ export default function SubmitPage() {
             onChange={(e) => setDishName(stripNonAlpha(e.target.value))}
             placeholder="e.g. Hyderabadi Chicken Biryani"
             maxLength={MAX_DISH_NAME_LENGTH}
-            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
           />
           {dishName.trim() && (
             <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
@@ -135,7 +135,7 @@ export default function SubmitPage() {
         </div>
 
         <div>
-          <label htmlFor="restaurantName" className="mb-1 block text-sm font-medium text-stone-700">
+          <label htmlFor="restaurantName" className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
             Restaurant / place
           </label>
           <input
@@ -145,7 +145,7 @@ export default function SubmitPage() {
             onChange={(e) => setRestaurantName(stripNonAlpha(e.target.value))}
             placeholder="e.g. Paradise Biryani"
             maxLength={MAX_RESTAURANT_NAME_LENGTH}
-            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
           />
         </div>
 
@@ -155,7 +155,7 @@ export default function SubmitPage() {
         </fieldset>
 
         <div>
-          <label htmlFor="price" className="mb-1 block text-sm font-medium text-stone-700">
+          <label htmlFor="price" className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
             Price after discount (₹)
           </label>
           <input
@@ -167,12 +167,12 @@ export default function SubmitPage() {
             value={price}
             onChange={(e) => setPrice(stripNonPriceChars(e.target.value))}
             placeholder="e.g. 250"
-            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
           />
         </div>
 
         <div>
-          <label htmlFor="photo" className="mb-1 block text-sm font-medium text-stone-700">
+          <label htmlFor="photo" className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
             Photos <span className="text-stone-400">(up to {MAX_PHOTOS_PER_RECOMMENDATION})</span>
           </label>
           <input
@@ -181,7 +181,7 @@ export default function SubmitPage() {
             accept="image/jpeg,image/png,image/webp,image/gif"
             multiple
             onChange={handleImageChange}
-            className="block w-full cursor-pointer rounded-lg border border-dashed border-orange-300 bg-orange-50/50 text-sm text-stone-500 file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-orange-600 file:px-4 file:py-2.5 file:text-sm file:font-medium file:text-white file:transition-colors hover:file:bg-orange-700"
+            className="block w-full cursor-pointer rounded-lg border border-dashed border-orange-300 bg-orange-50/50 text-sm text-stone-500 file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-orange-600 file:px-4 file:py-2.5 file:text-sm file:font-medium file:text-white file:transition-colors hover:file:bg-orange-700 dark:border-stone-700 dark:bg-stone-900/50 dark:text-stone-400"
           />
           {previewUrls.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
@@ -199,8 +199,8 @@ export default function SubmitPage() {
         </div>
 
         <div>
-          <label htmlFor="reviewerName" className="mb-1 block text-sm font-medium text-stone-700">
-            Your name <span className="text-stone-400">(optional)</span>
+          <label htmlFor="reviewerName" className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
+            Your name <span className="text-stone-400 dark:text-stone-500">(optional)</span>
           </label>
           <input
             id="reviewerName"
@@ -209,13 +209,13 @@ export default function SubmitPage() {
             onChange={(e) => setReviewerName(e.target.value)}
             placeholder="e.g. Ashish"
             maxLength={MAX_REVIEWER_NAME_LENGTH}
-            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
           />
         </div>
 
         <div>
-          <label htmlFor="notes" className="mb-1 block text-sm font-medium text-stone-700">
-            Notes <span className="text-stone-400">(optional)</span>
+          <label htmlFor="notes" className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
+            Notes <span className="text-stone-400 dark:text-stone-500">(optional)</span>
           </label>
           <textarea
             id="notes"
@@ -224,12 +224,12 @@ export default function SubmitPage() {
             rows={3}
             placeholder="What made it great?"
             maxLength={MAX_NOTES_LENGTH}
-            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none"
+            className="w-full rounded-lg border border-stone-300 px-3 py-2 focus:border-orange-500 focus:outline-none dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
           />
         </div>
 
         {error && (
-          <p role="alert" className="text-sm text-red-600">
+          <p role="alert" className="text-sm text-red-600 dark:text-red-400">
             {error}
           </p>
         )}

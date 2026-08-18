@@ -17,8 +17,8 @@ export default function Error({
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-4 py-16 text-center">
       <p className="text-6xl">😕</p>
-      <h1 className="mt-4 text-3xl font-bold text-stone-900">Something went wrong</h1>
-      <p className="mt-2 text-stone-500">
+      <h1 className="mt-4 text-3xl font-bold text-stone-900 dark:text-stone-100">Something went wrong</h1>
+      <p className="mt-2 text-stone-500 dark:text-stone-400">
         An unexpected error occurred. Please try again.
       </p>
       <button
