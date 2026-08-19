@@ -22,10 +22,8 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
   silent: true,
-  // No SENTRY_AUTH_TOKEN/org/project is configured, so source-map upload is
-  // skipped — stack traces in Sentry will show minified code until that's added.
-  sourcemaps: {
-    disable: true,
-  },
 });
