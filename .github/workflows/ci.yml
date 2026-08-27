@@ -43,10 +43,28 @@ jobs:
       - run: npm ci
       - run: npx prisma migrate deploy
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      - name: Run Playwright tests
+        id: tests
+        run: npm run test:e2e
+      - name: Write job summary
+        # Runs regardless of pass/fail, so the run's summary page always shows
+        # today's result at a glance — no click-through or download needed.
+        if: always()
+        run: |
+          if [ "${{ steps.tests.outcome }}" = "success" ]; then
+            echo "### ✅ Playwright E2E — all tests passed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### ❌ Playwright E2E — failures (see the annotations above and the playwright-report artifact for full detail)" >> "$GITHUB_STEP_SUMMARY"
+          fi
       - uses: actions/upload-artifact@v4
-        if: failure()
+        # Always upload (not just on failure) so the daily scheduled run has
+        # something to download even when everything passes — GitHub Pages
+        # would give a one-click view instead, but that needs a paid plan
+        # for a private repo, so this is the free alternative: one click to
+        # download the html report zip, unrelated to whether it's a pass.
+        if: always()
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+          if-no-files-found: ignore

@@ -13,7 +13,9 @@ export default defineConfig({
   // resource-contention timeouts that showed up on the first real CI run.
   workers: process.env.CI ? 2 : 4,
   timeout: process.env.CI ? 45_000 : 30_000,
-  reporter: "html",
+  // The github reporter turns failures into inline annotations on the
+  // Actions run page itself — visible without opening the html report.
+  reporter: process.env.CI ? [["html"], ["github"]] : "html",
   globalSetup: "./tests/global-setup.ts",
   // The GitHub Actions runner is geographically far from the test Supabase
   // project/storage bucket (both in ap-south-1), so a single web-first
