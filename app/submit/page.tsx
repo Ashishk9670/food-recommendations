@@ -31,10 +31,24 @@ export default function SubmitPage() {
 
   const detectedCategory = useMemo(() => detectCategory(dishName), [dishName]);
 
+  function clearNoPhotoError() {
+    setError((prev) => (prev === "Please choose at least one photo." ? null : prev));
+  }
+
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []).slice(0, MAX_PHOTOS_PER_RECOMMENDATION);
     setImageFiles(files);
     setPreviewUrls(files.map((file) => URL.createObjectURL(file)));
+    clearNoPhotoError();
+  }
+
+  function handleRemoveImage(index: number) {
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => {
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
+    clearNoPhotoError();
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -186,13 +200,22 @@ export default function SubmitPage() {
           {previewUrls.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {previewUrls.map((url, index) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={url}
-                  src={url}
-                  alt={`Preview ${index + 1}`}
-                  className="h-24 w-24 rounded-lg object-cover"
-                />
+                <div key={url} className="relative h-24 w-24">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt={`Preview ${index + 1}`}
+                    className="h-24 w-24 rounded-lg object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    aria-label={`Remove photo ${index + 1}`}
+                    className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-stone-900/80 text-sm leading-none text-white shadow hover:bg-stone-900 dark:bg-stone-100/90 dark:text-stone-900 dark:hover:bg-stone-100"
+                  >
+                    ×
+                  </button>
+                </div>
               ))}
             </div>
           )}

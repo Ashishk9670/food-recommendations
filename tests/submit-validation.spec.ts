@@ -1,4 +1,7 @@
+import path from "node:path";
 import { expect, test } from "@playwright/test";
+
+const TEST_IMAGE = path.join(__dirname, "fixtures/test-dish.png");
 
 // Every case here is blocked by client-side validation in app/submit/page.tsx
 // before fetch() is ever called, so none of this touches the rate-limited
@@ -28,6 +31,32 @@ test.describe("submit form validation", () => {
     await expect(page.locator('p[role="alert"]')).toContainText("Please enter a valid price");
 
     await page.getByLabel("Price after discount (₹)").fill("199");
+    await submit.click();
+    await expect(page.locator('p[role="alert"]')).toHaveText("Please choose at least one photo.");
+  });
+
+  test("the no-photo error clears as soon as a photo is chosen, and stays cleared after removing it", async ({
+    page,
+  }) => {
+    await page.goto("/submit");
+    const submit = page.getByRole("button", { name: "Submit Recommendation" });
+
+    await page.getByLabel("Dish name").fill("Test Dish");
+    await page.getByLabel("Restaurant / place").fill("Test Restaurant");
+    await page.getByRole("button", { name: "Rate 5 stars" }).click();
+    await page.getByLabel("Price after discount (₹)").fill("199");
+    await submit.click();
+    await expect(page.locator('p[role="alert"]')).toHaveText("Please choose at least one photo.");
+
+    await page.getByLabel(/^Photos/).setInputFiles(TEST_IMAGE);
+    await expect(page.locator('p[role="alert"]')).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Remove photo 1" }).click();
+    await expect(page.getByAltText("Preview 1")).toHaveCount(0);
+    // Removing the only photo doesn't resurrect the error on its own — it
+    // only reappears if the user actually tries to submit again like this.
+    await expect(page.locator('p[role="alert"]')).toHaveCount(0);
+
     await submit.click();
     await expect(page.locator('p[role="alert"]')).toHaveText("Please choose at least one photo.");
   });
