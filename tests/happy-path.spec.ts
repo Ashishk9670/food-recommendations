@@ -42,7 +42,7 @@ test("full recommendation lifecycle: submit, like, report, duplicate, edit, perm
     await page.getByLabel("Restaurant / place").fill(restaurantName);
     await page.getByRole("button", { name: "Rate 4 stars" }).click();
     await page.getByLabel("Price after discount (₹)").fill("250");
-    await page.getByLabel(/^Photos/).setInputFiles([TEST_IMAGE, TEST_IMAGE_2]);
+    await page.getByLabel("Upload photos").setInputFiles([TEST_IMAGE, TEST_IMAGE_2]);
     await page.getByRole("button", { name: "Submit Recommendation" }).click();
     await page.waitForURL("/");
   });
@@ -106,7 +106,7 @@ test("full recommendation lifecycle: submit, like, report, duplicate, edit, perm
     await page.getByLabel("Restaurant / place").fill(restaurantName);
     await page.getByRole("button", { name: "Rate 3 stars" }).click();
     await page.getByLabel("Price after discount (₹)").fill("300");
-    await page.getByLabel("Photo").setInputFiles(TEST_IMAGE);
+    await page.getByLabel("Upload photos").setInputFiles(TEST_IMAGE);
     await page.getByRole("button", { name: "Submit Recommendation" }).click();
     await expect(page.locator('p[role="alert"]')).toContainText("already been recommended");
   });

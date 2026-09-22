@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import CategoryBadge from "@/components/CategoryBadge";
 import StarRating from "@/components/StarRating";
 import { detectCategory } from "@/lib/detectCategory";
@@ -18,6 +18,8 @@ import { saveOwnerToken } from "@/lib/ownerTokens";
 
 export default function SubmitPage() {
   const router = useRouter();
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
   const [dishName, setDishName] = useState("");
   const [restaurantName, setRestaurantName] = useState("");
   const [rating, setRating] = useState(0);
@@ -35,11 +37,24 @@ export default function SubmitPage() {
     setError((prev) => (prev === "Please choose at least one photo." ? null : prev));
   }
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []).slice(0, MAX_PHOTOS_PER_RECOMMENDATION);
-    setImageFiles(files);
-    setPreviewUrls(files.map((file) => URL.createObjectURL(file)));
+  // Shared by both the camera-capture and upload inputs — appends rather than
+  // replaces, so taking a photo doesn't wipe out ones already chosen (or
+  // vice versa). Room is computed before creating any object URLs so a
+  // selection that overflows the cap never leaks an unused URL.
+  function addImages(newFiles: File[]) {
+    if (newFiles.length === 0) return;
+    const room = Math.max(MAX_PHOTOS_PER_RECOMMENDATION - imageFiles.length, 0);
+    const accepted = newFiles.slice(0, room);
+    if (accepted.length === 0) return;
+    setImageFiles((prev) => [...prev, ...accepted]);
+    setPreviewUrls((prev) => [...prev, ...accepted.map((file) => URL.createObjectURL(file))]);
     clearNoPhotoError();
+  }
+
+  function handleFilesSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    addImages(Array.from(e.target.files ?? []));
+    // Reset so choosing the exact same file again still fires onChange.
+    e.target.value = "";
   }
 
   function handleRemoveImage(index: number) {
@@ -185,18 +200,49 @@ export default function SubmitPage() {
           />
         </div>
 
-        <div>
-          <label htmlFor="photo" className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
+        <fieldset>
+          <legend className="mb-1 text-sm font-medium text-stone-700 dark:text-stone-300">
             Photos <span className="text-stone-400">(up to {MAX_PHOTOS_PER_RECOMMENDATION})</span>
-          </label>
+          </legend>
+          {/* Camera-capture input: on phones (iOS/Android), `capture` makes the
+              browser open the camera directly instead of a file browser. Desktop
+              browsers ignore `capture`, which is exactly why the "Take Photo"
+              button that triggers it is hidden there — it wouldn't do anything
+              useful. */}
           <input
-            id="photo"
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            aria-label="Take photo"
+            onChange={handleFilesSelected}
+            className="hidden"
+          />
+          <input
+            ref={uploadInputRef}
             type="file"
             accept="image/jpeg,image/png,image/webp,image/gif"
             multiple
-            onChange={handleImageChange}
-            className="block w-full cursor-pointer rounded-lg border border-dashed border-orange-300 bg-orange-50/50 text-sm text-stone-500 file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-orange-600 file:px-4 file:py-2.5 file:text-sm file:font-medium file:text-white file:transition-colors hover:file:bg-orange-700 dark:border-stone-700 dark:bg-stone-900/50 dark:text-stone-400"
+            aria-label="Upload photos"
+            onChange={handleFilesSelected}
+            className="hidden"
           />
+          <div className="flex flex-wrap gap-2 rounded-lg border border-dashed border-orange-300 bg-orange-50/50 p-3 dark:border-stone-700 dark:bg-stone-900/50">
+            <button
+              type="button"
+              onClick={() => cameraInputRef.current?.click()}
+              className="sm:hidden inline-flex items-center gap-1.5 rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-700"
+            >
+              📷 Take Photo
+            </button>
+            <button
+              type="button"
+              onClick={() => uploadInputRef.current?.click()}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-700"
+            >
+              Upload Photos
+            </button>
+          </div>
           {previewUrls.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {previewUrls.map((url, index) => (
@@ -219,7 +265,7 @@ export default function SubmitPage() {
               ))}
             </div>
           )}
-        </div>
+        </fieldset>
 
         <div>
           <label htmlFor="reviewerName" className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">

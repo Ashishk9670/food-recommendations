@@ -2,6 +2,7 @@ import path from "node:path";
 import { expect, test } from "@playwright/test";
 
 const TEST_IMAGE = path.join(__dirname, "fixtures/test-dish.png");
+const TEST_IMAGE_2 = path.join(__dirname, "fixtures/test-dish-2.png");
 
 // Every case here is blocked by client-side validation in app/submit/page.tsx
 // before fetch() is ever called, so none of this touches the rate-limited
@@ -48,7 +49,7 @@ test.describe("submit form validation", () => {
     await submit.click();
     await expect(page.locator('p[role="alert"]')).toHaveText("Please choose at least one photo.");
 
-    await page.getByLabel(/^Photos/).setInputFiles(TEST_IMAGE);
+    await page.getByLabel("Upload photos").setInputFiles(TEST_IMAGE);
     await expect(page.locator('p[role="alert"]')).toHaveCount(0);
 
     await page.getByRole("button", { name: "Remove photo 1" }).click();
@@ -105,5 +106,36 @@ test.describe("submit form validation", () => {
 
     await dishName.fill("Mystery Dessert");
     await expect(page.getByText("Other", { exact: true })).toBeVisible();
+  });
+
+  test("the camera button only shows on phone-sized viewports; upload always shows", async ({
+    page,
+  }) => {
+    await page.goto("/submit");
+    const takePhoto = page.getByRole("button", { name: "Take Photo" });
+    const upload = page.getByRole("button", { name: "Upload Photos" });
+
+    // Default Playwright viewport (1280x720) is well above the sm breakpoint.
+    await expect(takePhoto).toBeHidden();
+    await expect(upload).toBeVisible();
+
+    await page.setViewportSize({ width: 375, height: 812 });
+    await expect(takePhoto).toBeVisible();
+    await expect(upload).toBeVisible();
+  });
+
+  test("taking a photo adds to the selection instead of replacing what was already uploaded", async ({
+    page,
+  }) => {
+    await page.goto("/submit");
+
+    await page.getByLabel("Upload photos").setInputFiles([TEST_IMAGE, TEST_IMAGE_2]);
+    await expect(page.getByAltText(/^Preview/)).toHaveCount(2);
+
+    // A camera capture (simulated the same way Playwright simulates any file
+    // input — real camera hardware isn't invokable in a headless test) should
+    // append, not replace, the two already chosen via upload.
+    await page.getByLabel("Take photo").setInputFiles(TEST_IMAGE);
+    await expect(page.getByAltText(/^Preview/)).toHaveCount(3);
   });
 });

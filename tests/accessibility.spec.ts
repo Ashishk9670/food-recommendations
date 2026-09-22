@@ -7,7 +7,9 @@ test.describe("submit form accessibility", () => {
     await expect(page.getByLabel("Dish name")).toBeVisible();
     await expect(page.getByLabel("Restaurant / place")).toBeVisible();
     await expect(page.getByLabel("Price after discount (₹)")).toBeVisible();
-    await expect(page.getByLabel("Photo")).toBeVisible();
+    // The file inputs themselves are visually hidden and triggered by these
+    // labeled buttons instead — that's the accessible entry point now.
+    await expect(page.getByRole("button", { name: "Upload Photos" })).toBeVisible();
     await expect(page.getByLabel("Your name (optional)")).toBeVisible();
     await expect(page.getByLabel("Notes (optional)")).toBeVisible();
   });
