@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Claude Code worktrees live inside the repo folder and carry their own
+    // .next build output, which would otherwise flood `npm run lint`.
+    ".claude/**",
   ]),
 ]);
 
