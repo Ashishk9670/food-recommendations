@@ -1,8 +1,9 @@
 import { randomUUID } from "crypto";
 import { revalidateTag } from "next/cache";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
 import { detectCategory } from "@/lib/detectCategory";
+import { sendNewRecommendationEmail } from "@/lib/email";
 import { matchesImageSignature } from "@/lib/imageSignature";
 import { uploadImage } from "@/lib/storage";
 import { RECOMMENDATIONS_TAG } from "@/lib/recommendations";
@@ -186,6 +187,19 @@ export async function POST(request: NextRequest) {
   });
 
   revalidateTag(RECOMMENDATIONS_TAG, { expire: 0 });
+
+  // Runs after the response is sent, so the submitter never waits on mail
+  // delivery and a mail failure can't fail their submission.
+  after(() =>
+    sendNewRecommendationEmail({
+      id: recommendation.id,
+      dishName: recommendation.dishName,
+      restaurantName: recommendation.restaurantName,
+      rating: recommendation.rating,
+      price: recommendation.price,
+      reviewerName: recommendation.reviewerName,
+    }),
+  );
 
   return NextResponse.json(recommendation, { status: 201 });
 }

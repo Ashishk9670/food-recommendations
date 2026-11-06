@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import NotificationBell from "@/components/NotificationBell";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -54,13 +55,16 @@ export default function RootLayout({
                 for Triomics, by Triomics
               </span>
             </Link>
-            <Link
-              href="/submit"
-              className="flex-shrink-0 whitespace-nowrap rounded-lg bg-white px-4 py-2 text-sm font-semibold text-rose-600 shadow-sm hover:bg-orange-50"
-            >
-              <span className="sm:hidden">+ Submit</span>
-              <span className="hidden sm:inline">+ Submit a Recommendation</span>
-            </Link>
+            <div className="flex flex-shrink-0 items-center gap-2">
+              <NotificationBell />
+              <Link
+                href="/submit"
+                className="flex-shrink-0 whitespace-nowrap rounded-lg bg-white px-4 py-2 text-sm font-semibold text-rose-600 shadow-sm hover:bg-orange-50"
+              >
+                <span className="sm:hidden">+ Submit</span>
+                <span className="hidden sm:inline">+ Submit a Recommendation</span>
+              </Link>
+            </div>
           </div>
         </header>
         <main className="flex flex-1 flex-col">{children}</main>

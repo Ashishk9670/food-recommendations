@@ -4,7 +4,7 @@ import { Pool } from "pg";
 dotenv.config({ path: ".env.test" });
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const BASE_URL = "http://localhost:3100";
+const BASE_URL = `http://localhost:${process.env.PLAYWRIGHT_PORT ?? 3100}`;
 
 export type SeedRow = {
   dishName: string;
@@ -15,6 +15,7 @@ export type SeedRow = {
   likeCount: number;
   imageUrl: string;
   createdAt: Date;
+  editToken?: string;
 };
 
 // Seeding/cleanup here bypasses the app's own mutation routes (deliberately,
@@ -25,16 +26,27 @@ async function bustRecommendationsCache(): Promise<void> {
   await fetch(`${BASE_URL}/api/test/revalidate`, { method: "POST" }).catch(() => {});
 }
 
-export async function seedRecommendations(rows: SeedRow[]): Promise<void> {
+export async function seedRecommendations(rows: SeedRow[]): Promise<number[]> {
+  const ids: number[] = [];
   for (const row of rows) {
     const { rows: inserted } = await pool.query<{ id: number }>(
       `INSERT INTO "Recommendation"
         ("dishName", "restaurantName", "category", "rating", "price", "likeCount", "editToken", "createdAt")
-       VALUES ($1, $2, $3, $4, $5, $6, '', $7)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING "id"`,
-      [row.dishName, row.restaurantName, row.category, row.rating, row.price, row.likeCount, row.createdAt],
+      [
+        row.dishName,
+        row.restaurantName,
+        row.category,
+        row.rating,
+        row.price,
+        row.likeCount,
+        row.editToken ?? "",
+        row.createdAt,
+      ],
     );
     const recommendationId = inserted[0].id;
+    ids.push(recommendationId);
     await pool.query(
       `INSERT INTO "Photo" ("recommendationId", "url", "order", "isPrimary")
        VALUES ($1, $2, 0, true)`,
@@ -42,6 +54,7 @@ export async function seedRecommendations(rows: SeedRow[]): Promise<void> {
     );
   }
   await bustRecommendationsCache();
+  return ids;
 }
 
 export async function deleteRecommendationsByPrefix(prefix: string): Promise<void> {

@@ -3,7 +3,8 @@ import dotenv from "dotenv";
 
 dotenv.config({ path: ".env.test" });
 
-const PORT = 3100;
+// Override with PLAYWRIGHT_PORT when another local server already holds 3100.
+const PORT = Number(process.env.PLAYWRIGHT_PORT ?? 3100);
 const baseURL = `http://localhost:${PORT}`;
 
 export default defineConfig({
