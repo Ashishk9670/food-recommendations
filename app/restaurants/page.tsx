@@ -93,7 +93,7 @@ export default async function RestaurantsPage({
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       placeholder="blur"
                       blurDataURL={IMAGE_BLUR_DATA_URL}
-                      loading={index < 3 ? "eager" : "lazy"}
+                      loading={index === 0 ? "eager" : "lazy"}
                       fetchPriority={index === 0 ? "high" : "auto"}
                     />
                   ) : (

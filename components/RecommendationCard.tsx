@@ -24,8 +24,11 @@ type RecommendationCardProps = {
   // Static rendering for the submit page's live preview: no links, no live
   // like/report buttons, and it accepts a local blob: URL for the photo.
   preview?: boolean;
-  // Position in its grid. The first row's photos are the likely LCP element,
-  // so they skip lazy-loading; the very first is fetched at high priority.
+  // Position in its grid. Only the first photo loads eagerly, at high
+  // priority: it's above the fold at every width. Making more photos eager
+  // has React preload them all, and on a slow phone those downloads starve
+  // the stylesheet and app JavaScript (measured: ~280KB of photos racing the
+  // CSS and pushing hydration past 3.5s).
   index?: number;
 };
 
@@ -102,8 +105,7 @@ export default function RecommendationCard({
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              {...(index !== undefined && index < 3 ? { loading: "eager" as const } : {})}
-              {...(index === 0 ? { fetchPriority: "high" as const } : {})}
+              {...(index === 0 ? { loading: "eager" as const, fetchPriority: "high" as const } : {})}
               {...(preview
                 ? { unoptimized: true }
                 : { placeholder: "blur" as const, blurDataURL: IMAGE_BLUR_DATA_URL })}

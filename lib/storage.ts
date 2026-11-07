@@ -12,7 +12,9 @@ export async function uploadImage(
 ): Promise<string> {
   const { error } = await supabase.storage
     .from(BUCKET)
-    .upload(filename, bytes, { contentType });
+    // Filenames are random UUIDs and files are never overwritten, so the
+    // original can be cached for a year (Supabase's default is 1 hour).
+    .upload(filename, bytes, { contentType, cacheControl: "31536000" });
   if (error) throw error;
 
   return supabase.storage.from(BUCKET).getPublicUrl(filename).data.publicUrl;

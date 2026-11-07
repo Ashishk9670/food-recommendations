@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
     define: sentryCompileTimeFlags,
   },
   images: {
+    // Dish photos never change once uploaded (unique filenames; edits don't
+    // replace photos, deletes remove the file), so resized copies can be
+    // cached for a month instead of the 4-hour default — faster repeat
+    // visits and fewer paid re-optimizations.
+    minimumCacheTTL: 2678400,
     remotePatterns: [
       {
         protocol: "https",
