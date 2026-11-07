@@ -45,7 +45,7 @@ export default function Pagination({
           ← Previous
         </Link>
       ) : (
-        <span className="rounded-full px-5 py-2 text-sm font-semibold text-border-hover">← Previous</span>
+        <span aria-disabled="true" className="rounded-full px-5 py-2 text-sm font-semibold text-faint">← Previous</span>
       )}
       {hasNext ? (
         <Link
@@ -55,7 +55,7 @@ export default function Pagination({
           Next →
         </Link>
       ) : (
-        <span className="rounded-full px-5 py-2 text-sm font-semibold text-border-hover">Next →</span>
+        <span aria-disabled="true" className="rounded-full px-5 py-2 text-sm font-semibold text-faint">Next →</span>
       )}
     </div>
   );
