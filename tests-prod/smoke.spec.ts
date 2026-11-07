@@ -265,6 +265,21 @@ test.describe("read-only checks", () => {
 });
 
 test.describe("write flow (creates one test dish, then deletes it)", () => {
+  // Captured right after submitting, outside the page, so cleanup still works
+  // if the test times out and its browser is already gone.
+  let created: { id: number; token: string } | null = null;
+
+  test.afterAll(async ({ playwright }, testInfo) => {
+    if (!created) return;
+    const api = await playwright.request.newContext({ baseURL: testInfo.project.use.baseURL });
+    const res = await api.delete(`/api/recommendations/${created.id}`, {
+      headers: { "x-edit-token": created.token },
+    });
+    console.log(`Cleanup: deleted leftover test dish ${created.id} (${res.status()})`);
+    await api.dispose();
+    created = null;
+  });
+
   test("submit, browse, comment, like, report, duplicate, edit, permissions, delete", async ({
     page,
     browser,
@@ -282,7 +297,7 @@ test.describe("write flow (creates one test dish, then deletes it)", () => {
     const restaurantName = `Zzztest Kitchen ${suffix}`;
     let id = 0;
 
-    try {
+    {
       await test.step("submit", async () => {
         await page.goto("/submit");
         await expect(page.getByRole("button", { name: "Upload Photos" })).toBeEnabled({ timeout: 20_000 });
@@ -299,10 +314,12 @@ test.describe("write flow (creates one test dish, then deletes it)", () => {
         ]);
         await page.getByRole("button", { name: "Submit Recommendation" }).click();
         await page.waitForURL((url) => url.pathname === "/", { timeout: 30_000 });
-        id = await page.evaluate(() => {
-          const tokens = JSON.parse(localStorage.getItem("myRecommendationTokens") ?? "{}");
-          return Math.max(...Object.keys(tokens).map(Number));
+        created = await page.evaluate(() => {
+          const tokens: Record<string, string> = JSON.parse(localStorage.getItem("myRecommendationTokens") ?? "{}");
+          const newest = Math.max(...Object.keys(tokens).map(Number));
+          return { id: newest, token: tokens[newest] };
         });
+        id = created.id;
         expect(Number.isInteger(id) && id > 0).toBe(true);
       });
 
@@ -374,25 +391,18 @@ test.describe("write flow (creates one test dish, then deletes it)", () => {
 
       await test.step("owner deletes it", async () => {
         await page.goto(`/?q=${encodeURIComponent(dishName)}`);
+        const deleted = page.waitForResponse(
+          (res) => res.url().endsWith(`/api/recommendations/${id}`) && res.request().method() === "DELETE",
+        );
         await card().getByRole("button", { name: "Delete" }).click();
+        expect((await deleted).status()).toBe(200);
+        created = null;
         await expect(card()).toHaveCount(0);
         // Streams behind a loading skeleton, so it's a 200 marked noindex.
         await page.goto(`/recommendation/${id}`);
         await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
-        id = 0;
       });
-    } finally {
-      if (failedImages.length) console.log("Image optimizer errors:\n" + failedImages.join("\n"));
-      // If any step failed, still remove the test dish using the owner token.
-      if (id) {
-        const token = await page.evaluate(
-          (dishId) => JSON.parse(localStorage.getItem("myRecommendationTokens") ?? "{}")[dishId],
-          id,
-        );
-        if (token) {
-          await page.request.delete(`/api/recommendations/${id}`, { headers: { "x-edit-token": token } });
-        }
-      }
     }
+    if (failedImages.length) console.log("Image optimizer errors:\n" + failedImages.join("\n"));
   });
 });
