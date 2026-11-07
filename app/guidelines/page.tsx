@@ -83,8 +83,9 @@ export default function GuidelinesPage() {
 
         <Section icon={Camera} title="Photos">
           <p>
-            Add up to {MAX_PHOTOS_PER_RECOMMENDATION} of your own photos (JPEG, PNG, WEBP or GIF,
-            under 5MB each). An overhead or side angle that shows the portion beats a menu picture.
+            Add up to {MAX_PHOTOS_PER_RECOMMENDATION} of your own photos (JPEG, PNG, WEBP, HEIC or
+            GIF). Big phone photos are resized automatically before upload, so there&apos;s no need to
+            shrink them yourself. An overhead or side angle that shows the portion beats a menu picture.
             The first photo is the cover on the card. On a phone you can take the photo straight from
             the form.
           </p>

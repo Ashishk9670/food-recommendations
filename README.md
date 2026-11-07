@@ -6,7 +6,7 @@ Live at: https://food-recommendations-six.vercel.app
 
 ## Features
 
-- **Submit a recommendation** — dish name, restaurant, star rating, price, up to 5 photos (camera capture on phones, drag-and-drop on desktop), optional notes and reviewer name, with a live card preview. The category (Biryani, Chicken, Paneer, Chinese, South Indian, Rolls & Bowls, Other) is auto-detected from the dish name and can be overridden. No account needed: a secret edit token is generated per submission and kept in the browser's `localStorage`, letting the submitter edit or delete it later.
+- **Submit a recommendation** — dish name, restaurant, star rating, price, up to 5 photos (camera capture on phones, drag-and-drop on desktop; large photos and iPhone HEIC are resized/converted to JPEG in the browser to stay under Vercel's 4.5MB request limit), optional notes and reviewer name, with a live card preview. The category (Biryani, Chicken, Paneer, Chinese, South Indian, Rolls & Bowls, Other) is auto-detected from the dish name and can be overridden. No account needed: a secret edit token is generated per submission and kept in the browser's `localStorage`, letting the submitter edit or delete it later.
 - **Browse, filter, sort, search** — by category, star rating, price, and a fuzzy (typo-tolerant) search over dish/restaurant name backed by Postgres `pg_trgm`. Sort by newest, most liked, highest rated, or trending (this ISO week). Cursor-based (keyset) pagination, not offset-based.
 - **Likes and reports** — one like/report per browser per recommendation (tracked client-side), rate-limited server-side per IP.
 - **Comments and a photo gallery** on each recommendation's permalink page (`/recommendation/[id]`).
@@ -48,7 +48,7 @@ Set these in `.env` for local development (gitignored, never commit real values)
 
 | Variable | Required | Purpose |
 |---|---|---|
-| `DATABASE_URL` | yes | Postgres connection string (Supabase session pooler) |
+| `DATABASE_URL` | yes | Postgres connection string. On Vercel use Supabase's **transaction** pooler (port 6543): it multiplexes many serverless instances onto few DB connections. Locally and for `prisma migrate`, the session pooler (port 5432) |
 | `SUPABASE_URL` | yes | Supabase project URL, used for Storage |
 | `SUPABASE_SECRET_KEY` | yes | Supabase service key for Storage uploads (bypasses RLS — server-only) |
 | `ADMIN_PASSWORD` | yes | The owner's `/admin` password (sign in with the username left blank). Changing it signs out existing owner sessions |
@@ -81,7 +81,7 @@ Playwright specs live in `tests/`. They talk to a dedicated test Supabase projec
 
 ## CI/CD
 
-- **GitHub Actions** (`.github/workflows/ci.yml`): a `Lint & Typecheck` job and a `Playwright E2E` job, triggered on push/PR to `main` and once daily (12:00 PM IST). The E2E job always uploads the HTML report as an artifact and writes a pass/fail line to the run's job summary, so results are checkable at a glance without downloading anything.
+- **GitHub Actions** (`.github/workflows/ci.yml`): a `Lint & Typecheck` job and a `Playwright E2E` job, triggered on push/PR to `main` and once daily (12:00 PM IST). The daily run (and a manual "Run workflow") also runs `Production smoke (read-only)` against the live site — every page, filter, sort, search and the admin lock — without creating any data. The E2E job always uploads the HTML report as an artifact and writes a pass/fail line to the run's job summary, so results are checkable at a glance without downloading anything.
 - **Deploying**: `git push` only runs CI — it does not deploy. Shipping to production is a separate, explicit step: `vercel deploy --prod`. Environment variable changes in Vercel only take effect on the next deploy after being set.
 
 ## Project structure notes

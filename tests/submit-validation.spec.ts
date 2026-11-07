@@ -209,6 +209,64 @@ test.describe("submit form validation", () => {
     await expect(discard).toBeDisabled();
   });
 
+  test("a big phone-sized photo is resized to a JPEG before upload", async ({ page }) => {
+    await gotoSubmitReady(page);
+    // 3200x2400 PNG, like an unedited phone photo's dimensions.
+    const bigPng = await page.evaluate(() => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 3200;
+      canvas.height = 2400;
+      const ctx = canvas.getContext("2d")!;
+      const gradient = ctx.createLinearGradient(0, 0, 3200, 2400);
+      gradient.addColorStop(0, "#c2410c");
+      gradient.addColorStop(1, "#fdfbf7");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 3200, 2400);
+      return canvas.toDataURL("image/png").split(",")[1];
+    });
+    await page.getByLabel("Upload photos").setInputFiles({
+      name: "IMG_1234.png",
+      mimeType: "image/png",
+      buffer: Buffer.from(bigPng, "base64"),
+    });
+
+    const preview = page.getByAltText("Preview 1");
+    await expect(preview).toBeVisible();
+    expect(await preview.evaluate((img: HTMLImageElement) => [img.naturalWidth, img.naturalHeight])).toEqual([
+      1920, 1440,
+    ]);
+
+    // Capture what would be uploaded, without spending a real submission.
+    const captured: { body: Buffer | null } = { body: null };
+    await page.route("**/api/recommendations", async (route) => {
+      captured.body = route.request().postDataBuffer();
+      await route.fulfill({ status: 400, json: { error: "Intercepted by test." } });
+    });
+    await page.getByLabel("Dish name").fill("Test Dish");
+    await page.getByLabel("Restaurant / place").fill("Test Restaurant");
+    await page.getByRole("button", { name: "Rate 4 stars" }).click();
+    await page.getByLabel("Price after discount (₹)").fill("199");
+    await page.getByRole("button", { name: "Submit Recommendation" }).click();
+    await expect(page.locator('p[role="alert"]')).toHaveText("Intercepted by test.");
+
+    const body = captured.body!.toString("latin1");
+    expect(body).toContain('filename="IMG_1234.jpg"');
+    expect(body).toContain("Content-Type: image/jpeg");
+    expect(body).not.toContain("Content-Type: image/png");
+  });
+
+  test("a photo the browser can't read shows a clear error instead of being added", async ({ page }) => {
+    await gotoSubmitReady(page);
+    await page.getByLabel("Upload photos").setInputFiles({
+      name: "IMG_5678.heic",
+      mimeType: "image/heic",
+      buffer: Buffer.from("definitely not a decodable image"),
+    });
+    await expect(page.locator('p[role="alert"]')).toContainText("Couldn't read “IMG_5678.heic”");
+    await expect(page.getByAltText(/^Preview/)).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Upload Photos" })).toBeEnabled();
+  });
+
   test("dropping an image onto the photo zone adds it, ignoring non-images", async ({ page }) => {
     await gotoSubmitReady(page);
     const pngBase64 = fs.readFileSync(TEST_IMAGE).toString("base64");

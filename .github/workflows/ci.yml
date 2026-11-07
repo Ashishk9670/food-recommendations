@@ -8,6 +8,8 @@ on:
   # 12:00 PM IST daily (IST is UTC+5:30, so 06:30 UTC)
   schedule:
     - cron: "30 6 * * *"
+  # Lets the prod smoke check be run on demand from the Actions tab.
+  workflow_dispatch:
 
 jobs:
   static-checks:
@@ -66,5 +68,39 @@ jobs:
         with:
           name: playwright-report
           path: playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  prod-smoke:
+    name: Production smoke (read-only)
+    # Daily and on demand only: deploys are manual (`vercel deploy --prod`),
+    # so a push doesn't change production. Read-only by design — the write
+    # test is excluded so colleagues never see a daily test dish in the bell.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Check the live site
+        id: smoke
+        run: npx playwright test -c playwright.prod.config.ts --grep-invert "write flow"
+      - name: Write job summary
+        if: always()
+        run: |
+          if [ "${{ steps.smoke.outcome }}" = "success" ]; then
+            echo "### ✅ Production smoke — live site healthy" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### ❌ Production smoke — the live site failed a check (see annotations and the playwright-report-prod artifact)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: playwright-report-prod
+          path: playwright-report-prod/
           retention-days: 7
           if-no-files-found: ignore

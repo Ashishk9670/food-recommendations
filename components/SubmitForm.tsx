@@ -40,9 +40,12 @@ import {
 } from "@/lib/limits";
 import { ALPHA_SPACE_PATTERN, PRICE_PATTERN, stripNonAlpha, stripNonPriceChars } from "@/lib/validation";
 import { saveOwnerToken } from "@/lib/ownerTokens";
+import { MAX_TOTAL_UPLOAD_BYTES, PhotoError, isAcceptedImage, prepareImage } from "@/lib/prepareImage";
 import { OFFICE_HUB, RATING_LABELS } from "@/lib/ratings";
 
-const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+// HEIC is accepted too: lib/prepareImage converts it (where the browser can
+// decode it) along with resizing large phone photos.
+const ACCEPT_ATTR = "image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.heic,.heif";
 
 const subscribeNoop = () => () => {};
 
@@ -115,6 +118,8 @@ export default function SubmitForm({
   const [shared, setShared] = useState(false);
   const [categoryOverride, setCategoryOverride] = useState<Category | null>(null);
   const [dragging, setDragging] = useState(false);
+  // True while selected photos are being resized/converted in the browser.
+  const [preparing, setPreparing] = useState(false);
   // False during SSR and hydration, true once interactive. The photo buttons
   // work by clicking hidden inputs from JS, so before hydration they'd
   // silently do nothing — keep them disabled until they can actually work.
@@ -129,16 +134,36 @@ export default function SubmitForm({
 
   // Shared by the camera input, the upload input and drag-and-drop — appends
   // rather than replaces, so adding photos one way never wipes out ones added
-  // another way. Room is computed before creating any object URLs so a
-  // selection that overflows the cap never leaks an unused URL.
-  function addImages(newFiles: File[]) {
+  // another way. Each photo is resized/converted first (lib/prepareImage);
+  // the photo buttons stay disabled meanwhile, so `imageFiles` can't change
+  // underneath this.
+  async function addImages(newFiles: File[]) {
     if (newFiles.length === 0) return;
     const room = Math.max(MAX_PHOTOS_PER_RECOMMENDATION - imageFiles.length, 0);
     const accepted = newFiles.slice(0, room);
     if (accepted.length === 0) return;
-    setImageFiles((prev) => [...prev, ...accepted]);
-    setPreviewUrls((prev) => [...prev, ...accepted.map((file) => URL.createObjectURL(file))]);
-    clearNoPhotoError();
+
+    setPreparing(true);
+    try {
+      const prepared: File[] = [];
+      for (const file of accepted) prepared.push(await prepareImage(file));
+      const totalBytes = [...imageFiles, ...prepared].reduce((sum, file) => sum + file.size, 0);
+      if (totalBytes > MAX_TOTAL_UPLOAD_BYTES) {
+        setError("Those photos are too large together (4MB max). Try fewer photos, or smaller GIFs.");
+        return;
+      }
+      setImageFiles((prev) => [...prev, ...prepared]);
+      setPreviewUrls((prev) => [...prev, ...prepared.map((file) => URL.createObjectURL(file))]);
+      setError((prev) =>
+        prev === "Please choose at least one photo." || prev?.startsWith("Those photos are too large")
+          ? null
+          : prev,
+      );
+    } catch (err) {
+      setError(err instanceof PhotoError ? err.message : "Couldn't prepare that photo. Please try another.");
+    } finally {
+      setPreparing(false);
+    }
   }
 
   function handleFilesSelected(e: React.ChangeEvent<HTMLInputElement>) {
@@ -150,7 +175,7 @@ export default function SubmitForm({
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setDragging(false);
-    addImages(Array.from(e.dataTransfer.files).filter((f) => ACCEPTED_IMAGE_TYPES.includes(f.type)));
+    addImages(Array.from(e.dataTransfer.files).filter(isAcceptedImage));
   }
 
   function handleRemoveImage(index: number) {
@@ -424,7 +449,7 @@ export default function SubmitForm({
                 3. Photos (up to {MAX_PHOTOS_PER_RECOMMENDATION})
               </span>
               <span className="hidden text-[11px] font-semibold normal-case tracking-normal text-faint sm:inline">
-                JPEG, PNG, WEBP, GIF · max 5MB
+                JPEG, PNG, WEBP, HEIC, GIF · resized automatically
               </span>
             </legend>
             {/* Camera-capture input: on phones (iOS/Android), `capture` makes the
@@ -444,7 +469,7 @@ export default function SubmitForm({
             <input
               ref={uploadInputRef}
               type="file"
-              accept={ACCEPTED_IMAGE_TYPES.join(",")}
+              accept={ACCEPT_ATTR}
               multiple
               aria-label="Upload photos"
               onChange={handleFilesSelected}
@@ -473,13 +498,13 @@ export default function SubmitForm({
                 Crisp overhead or side angles showing the portion and richness help teammates most.
               </p>
               <p className="mt-1 text-[11px] font-semibold text-faint sm:hidden">
-                JPEG, PNG, WEBP, GIF · max 5MB
+                JPEG, PNG, WEBP, HEIC, GIF · resized automatically
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 <button
                   type="button"
                   onClick={() => cameraInputRef.current?.click()}
-                  disabled={!hydrated}
+                  disabled={!hydrated || preparing}
                   className="sm:hidden inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-border-subtle bg-card px-4 py-2 text-sm font-semibold text-ink transition hover:border-border-hover disabled:opacity-50"
                 >
                   <Camera aria-hidden="true" className="h-4 w-4" />
@@ -488,7 +513,7 @@ export default function SubmitForm({
                 <button
                   type="button"
                   onClick={() => uploadInputRef.current?.click()}
-                  disabled={!hydrated}
+                  disabled={!hydrated || preparing}
                   className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-on-primary shadow-primary transition hover:bg-primary-hover disabled:opacity-50"
                 >
                   <Upload aria-hidden="true" className="h-4 w-4" />
@@ -525,7 +550,7 @@ export default function SubmitForm({
                   key={`empty-${i}`}
                   type="button"
                   onClick={() => uploadInputRef.current?.click()}
-                  disabled={!hydrated}
+                  disabled={!hydrated || preparing}
                   aria-label="Add another photo"
                   className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-[1.5px] border-dashed border-border-subtle bg-card-muted text-faint transition hover:border-border-hover hover:text-muted"
                 >
@@ -536,6 +561,12 @@ export default function SubmitForm({
                 </button>
               ))}
             </div>
+            {preparing && (
+              <p role="status" className="mt-2 flex items-center gap-2 text-[13px] text-muted">
+                <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin text-accent" />
+                Preparing photos…
+              </p>
+            )}
           </fieldset>
 
           <section>
@@ -604,7 +635,7 @@ export default function SubmitForm({
             </button>
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || preparing}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-7 py-3 text-[15px] font-semibold text-on-primary shadow-primary transition hover:-translate-y-px hover:bg-primary-hover disabled:translate-y-0 disabled:opacity-50"
             >
               {shared ? (

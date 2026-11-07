@@ -18,8 +18,14 @@ export default defineConfig({
   testDir: "./tests-prod",
   workers: 2,
   timeout: 60_000,
-  retries: 0,
-  reporter: [["list"], ["html", { outputFolder: "playwright-report-prod", open: "never" }]],
+  reporter: [
+    ["list"],
+    ["html", { outputFolder: "playwright-report-prod", open: "never" }],
+    // Inline failure annotations on the GitHub Actions run page.
+    ...(process.env.CI ? [["github"] as ["github"]] : []),
+  ],
+  // One retry on CI so a single network blip doesn't page anyone.
+  retries: process.env.CI ? 1 : 0,
   expect: { timeout: 15_000 },
   use: { baseURL, trace: "retain-on-failure" },
   projects: [
