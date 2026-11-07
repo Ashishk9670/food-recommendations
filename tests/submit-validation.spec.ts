@@ -114,6 +114,31 @@ test.describe("submit form validation", () => {
     await expect(detected.getByText("Other", { exact: true })).toBeVisible();
   });
 
+  test("category picker follows detection until overridden, and can go back to auto", async ({
+    page,
+  }) => {
+    await page.goto("/submit");
+    const radio = (name: string) => page.getByRole("radio", { name, exact: true });
+
+    await page.getByLabel("Dish name").fill("Masala Dosa");
+    await expect(radio("South Indian")).toHaveAttribute("aria-checked", "true");
+    await page.getByLabel("Dish name").fill("Paneer Kathi Roll");
+    await expect(radio("Rolls & Bowls")).toHaveAttribute("aria-checked", "true");
+
+    await radio("Paneer").click();
+    await expect(radio("Paneer")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("detected-category")).toContainText("you picked Paneer");
+    await expect(page.getByTestId("recommendation-preview").getByText("Paneer", { exact: true })).toBeVisible();
+
+    // An override sticks while the name keeps changing...
+    await page.getByLabel("Dish name").fill("Paneer Kathi Roll Combo");
+    await expect(radio("Paneer")).toHaveAttribute("aria-checked", "true");
+
+    // ...until the user goes back to the detected one.
+    await page.getByRole("button", { name: "Use detected" }).click();
+    await expect(radio("Rolls & Bowls")).toHaveAttribute("aria-checked", "true");
+  });
+
   test("the camera button only shows on phone-sized viewports; upload always shows", async ({
     page,
   }) => {

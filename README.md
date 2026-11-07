@@ -6,11 +6,16 @@ Live at: https://food-recommendations-six.vercel.app
 
 ## Features
 
-- **Submit a recommendation** — dish name, restaurant, star rating, price, up to 5 photos, optional notes and reviewer name. No account needed: a secret edit token is generated per submission and kept in the browser's `localStorage`, letting the submitter edit or delete it later.
+- **Submit a recommendation** — dish name, restaurant, star rating, price, up to 5 photos (camera capture on phones, drag-and-drop on desktop), optional notes and reviewer name, with a live card preview. The category (Biryani, Chicken, Paneer, Chinese, South Indian, Rolls & Bowls, Other) is auto-detected from the dish name and can be overridden. No account needed: a secret edit token is generated per submission and kept in the browser's `localStorage`, letting the submitter edit or delete it later.
 - **Browse, filter, sort, search** — by category, star rating, price, and a fuzzy (typo-tolerant) search over dish/restaurant name backed by Postgres `pg_trgm`. Sort by newest, most liked, highest rated, or trending (this ISO week). Cursor-based (keyset) pagination, not offset-based.
 - **Likes and reports** — one like/report per browser per recommendation (tracked client-side), rate-limited server-side per IP.
 - **Comments and a photo gallery** on each recommendation's permalink page (`/recommendation/[id]`).
-- **Admin dashboard** (`/admin`) — password-gated, lists every recommendation, delete any of them, export everything as CSV.
+- **Curated Spots** (`/restaurants`, `/restaurants/[slug]`) — every restaurant with its dish count, average rating, price range and likes; names typed differently ("Meghana Foods" / "meghana  foods") are grouped as one spot.
+- **Leaderboard** (`/leaderboard`) — top recommenders (by the name entered on each post), most-liked dishes, best-rated spots.
+- **On this device** (`/me`) — posts made from this browser and bookmarked ("saved") dishes, both kept in `localStorage`; there are no user accounts.
+- **Tasting Guidelines** (`/guidelines`) — rating scale, what makes useful notes and photos, how categories are detected, reporting.
+- **Admin dashboard** (`/admin`) — lists every recommendation, delete any of them, export everything as CSV.
+- **Admin accounts and audit log** — the owner signs in with `ADMIN_PASSWORD` (username left blank) and can add/remove named admins and reset their passwords on `/admin/team`. Sessions are stored server-side (`AdminSession`), so removing an admin, resetting their password or changing `ADMIN_PASSWORD` signs the affected sessions out. Every sign-in, failed sign-in, delete, report dismissal, export and team change is recorded in `/admin/audit` under the admin's name.
 - **Moderation queue** (`/admin/reports`) — recommendations with open reports, sorted by report count, with a one-click dismiss.
 - **New-review notifications** — a 🔔 in the header shows every visitor how many recommendations *other people* submitted since they last checked (your own never count), polled every 30s. The owner also gets an email per new submission when `NOTIFY_EMAIL` is set.
 - **Dark mode** — automatic, follows the OS/browser color scheme.
@@ -46,7 +51,7 @@ Set these in `.env` for local development (gitignored, never commit real values)
 | `DATABASE_URL` | yes | Postgres connection string (Supabase session pooler) |
 | `SUPABASE_URL` | yes | Supabase project URL, used for Storage |
 | `SUPABASE_SECRET_KEY` | yes | Supabase service key for Storage uploads (bypasses RLS — server-only) |
-| `ADMIN_PASSWORD` | yes | Password for `/admin` |
+| `ADMIN_PASSWORD` | yes | The owner's `/admin` password (sign in with the username left blank). Changing it signs out existing owner sessions |
 | `SITE_URL` | yes | Public site origin, used in metadata/sitemap/robots and in emailed links |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | yes | Rate-limit storage |
 | `NEXT_PUBLIC_SENTRY_DSN` | yes | Sentry error ingest endpoint (public by design — a DSN is write-only) |
@@ -66,6 +71,7 @@ For running tests locally, copy the equivalent values into `.env.test` pointed a
 | `npm run typecheck` | Regenerates Next's route types, then `tsc --noEmit` |
 | `npm run test:e2e` | Full Playwright suite (starts its own dev server on port 3100; set `PLAYWRIGHT_PORT` if that's taken) |
 | `npm run test:e2e:ui` | Same, with Playwright's UI mode |
+| `npm run test:prod` | Smoke suite against the live site (`PROD_URL` to point elsewhere): every page, filter, sort and search read-only, plus one full submit → like → comment → report → edit → delete cycle on a clearly-named test dish that it removes again |
 
 A pre-commit hook (husky + lint-staged) runs `eslint --fix` on staged `.ts`/`.tsx` files.
 

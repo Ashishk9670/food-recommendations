@@ -1,21 +1,16 @@
 import Image from "next/image";
-import Link from "next/link";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import AdminNav from "@/components/AdminNav";
 import CategoryBadge from "@/components/CategoryBadge";
 import DeleteRecommendationButton from "@/components/DeleteRecommendationButton";
 import StarRating from "@/components/StarRating";
-import { ADMIN_COOKIE, isValidAdminToken } from "@/lib/admin";
+import { requireAdminPage } from "@/lib/admin";
 import { prisma } from "@/lib/db";
 import { IMAGE_BLUR_DATA_URL } from "@/lib/imagePlaceholder";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  const cookieStore = await cookies();
-  if (!isValidAdminToken(cookieStore.get(ADMIN_COOKIE)?.value)) {
-    redirect("/admin/login");
-  }
+  const session = await requireAdminPage();
 
   const recommendations = await prisma.recommendation.findMany({
     orderBy: { createdAt: "desc" },
@@ -25,33 +20,10 @@ export default async function AdminPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-ink">
-          Admin Dashboard ({recommendations.length})
-        </h1>
-        <div className="flex items-center gap-4">
-          <Link
-            href="/admin/reports"
-            className="text-sm font-semibold text-muted underline-offset-4 hover:text-ink hover:underline"
-          >
-            Moderation queue{reportedCount > 0 ? ` (${reportedCount})` : ""}
-          </Link>
-          <a
-            href="/api/admin/export"
-            className="text-sm font-semibold text-muted underline-offset-4 hover:text-ink hover:underline"
-          >
-            Export CSV
-          </a>
-          <form action="/api/admin/logout" method="post">
-            <button
-              type="submit"
-              className="text-sm font-semibold text-muted underline-offset-4 hover:text-ink hover:underline"
-            >
-              Log out
-            </button>
-          </form>
-        </div>
-      </div>
+      <AdminNav session={session} current="dashboard" reportedCount={reportedCount} />
+      <h1 className="mb-4 text-2xl font-bold text-ink">
+        Admin Dashboard ({recommendations.length})
+      </h1>
 
       <div className="space-y-3">
         {recommendations.map((rec) => (

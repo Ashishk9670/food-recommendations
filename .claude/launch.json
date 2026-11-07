@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "next-dev-testdb",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "set -a; . ./.env.test; set +a; exec node_modules/.bin/next dev -p 3300"],
+      "port": 3300
     }
   ]
 }

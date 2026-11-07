@@ -35,6 +35,10 @@
   --tag-paneer-fg: #166534;
   --tag-chinese-bg: #e0f2fe;
   --tag-chinese-fg: #0369a1;
+  --tag-southindian-bg: #ede9fe;
+  --tag-southindian-fg: #5b21b6;
+  --tag-rolls-bg: #ffedd5;
+  --tag-rolls-fg: #9a3412;
   --tag-other-bg: #f1ede6;
   --tag-other-fg: #5b4139;
 }
@@ -69,6 +73,10 @@
     --tag-paneer-fg: #86efac;
     --tag-chinese-bg: rgb(14 165 233 / 0.16);
     --tag-chinese-fg: #7dd3fc;
+    --tag-southindian-bg: rgb(139 92 246 / 0.18);
+    --tag-southindian-fg: #c4b5fd;
+    --tag-rolls-bg: rgb(249 115 22 / 0.16);
+    --tag-rolls-fg: #fdba74;
     --tag-other-bg: rgb(255 255 255 / 0.08);
     --tag-other-fg: #d6cfc6;
   }
@@ -105,6 +113,10 @@
   --color-tag-paneer-fg: var(--tag-paneer-fg);
   --color-tag-chinese-bg: var(--tag-chinese-bg);
   --color-tag-chinese-fg: var(--tag-chinese-fg);
+  --color-tag-southindian-bg: var(--tag-southindian-bg);
+  --color-tag-southindian-fg: var(--tag-southindian-fg);
+  --color-tag-rolls-bg: var(--tag-rolls-bg);
+  --color-tag-rolls-fg: var(--tag-rolls-fg);
   --color-tag-other-bg: var(--tag-other-bg);
   --color-tag-other-fg: var(--tag-other-fg);
 

@@ -78,3 +78,43 @@ model DeletionLog {
   restaurantName String
   deletedAt      DateTime @default(now())
 }
+
+// Named admin accounts, managed by the owner (who signs in with ADMIN_PASSWORD
+// and has no row here).
+model AdminUser {
+  id           Int            @id @default(autoincrement())
+  username     String         @unique
+  // scrypt$<salt hex>$<hash hex>
+  passwordHash String
+  createdBy    String
+  createdAt    DateTime       @default(now())
+  sessions     AdminSession[]
+}
+
+model AdminSession {
+  id                    Int        @id @default(autoincrement())
+  // sha256 of the cookie value; the raw token only ever lives in the cookie
+  tokenHash             String     @unique
+  // null = the owner account
+  adminUserId           Int?
+  adminUser             AdminUser? @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  // hash of the credential the session was issued against, so changing a
+  // password (or ADMIN_PASSWORD) signs out every session made with the old one
+  credentialFingerprint String
+  expiresAt             DateTime
+  createdAt             DateTime   @default(now())
+
+  @@index([adminUserId])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  // "owner" or an AdminUser username
+  actor     String
+  action    String
+  targetId  Int?
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

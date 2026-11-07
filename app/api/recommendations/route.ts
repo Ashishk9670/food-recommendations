@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/db";
+import { isCategory } from "@/lib/categories";
 import { detectCategory } from "@/lib/detectCategory";
 import { sendNewRecommendationEmail } from "@/lib/email";
 import { matchesImageSignature } from "@/lib/imageSignature";
@@ -37,7 +38,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const formData = await request.formData();
+  // formData() throws on a non-multipart body; that's a bad request, not a 500.
+  const formData = await request.formData().catch(() => null);
+  if (!formData) {
+    return NextResponse.json({ error: "Expected a multipart form submission." }, { status: 400 });
+  }
 
   const dishName = formData.get("dishName");
   const restaurantName = formData.get("restaurantName");
@@ -45,6 +50,7 @@ export async function POST(request: NextRequest) {
   const priceRaw = formData.get("price");
   const reviewerName = formData.get("reviewerName");
   const notes = formData.get("notes");
+  const chosenCategory = formData.get("category");
   const images = formData.getAll("images").filter((f): f is File => f instanceof File && f.size > 0);
 
   if (typeof dishName !== "string" || !dishName.trim()) {
@@ -169,7 +175,8 @@ export async function POST(request: NextRequest) {
   const recommendation = await prisma.recommendation.create({
     data: {
       dishName: dishNameTrimmed,
-      category: detectCategory(dishName),
+      // The submitter can override the auto-detected category on the form.
+      category: isCategory(chosenCategory) ? chosenCategory : detectCategory(dishName),
       rating,
       price,
       restaurantName: restaurantNameTrimmed,

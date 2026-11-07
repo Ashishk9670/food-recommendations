@@ -1,12 +1,14 @@
-import { Flag, Heart, ImageIcon, MapPin, Star } from "lucide-react";
+import { Bookmark, Flag, Heart, ImageIcon, MapPin, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import CategoryBadge from "./CategoryBadge";
 import LikeButton from "./LikeButton";
 import OwnerActions from "./OwnerActions";
 import ReportButton from "./ReportButton";
+import SaveButton from "./SaveButton";
 import StarRating from "./StarRating";
 import { IMAGE_BLUR_DATA_URL } from "@/lib/imagePlaceholder";
+import { restaurantSlug } from "@/lib/slug";
 
 type RecommendationCardProps = {
   id: number;
@@ -41,6 +43,29 @@ function MaybeLink({
     </Link>
   ) : (
     <div className={className}>{children}</div>
+  );
+}
+
+function ReviewerLine({
+  name,
+  inFigure = false,
+  className = "",
+}: {
+  name: string;
+  inFigure?: boolean;
+  className?: string;
+}) {
+  const Tag = inFigure ? "figcaption" : "p";
+  return (
+    <Tag className={`flex items-center gap-1.5 text-xs font-medium text-faint ${className}`}>
+      <span
+        aria-hidden="true"
+        className="flex h-5 w-5 items-center justify-center rounded-full bg-accent-soft text-[10px] font-bold uppercase text-accent"
+      >
+        {name[0]}
+      </span>
+      — {name}
+    </Tag>
   );
 }
 
@@ -104,13 +129,27 @@ export default function RecommendationCard({
               {dishName}
             </h3>
           </MaybeLink>
-          <span className="flex-shrink-0 text-lg font-bold tracking-tight text-price">₹{price}</span>
+          <span className="flex flex-shrink-0 flex-col items-end">
+            {preview && (
+              <span className="text-[10px] font-bold uppercase tracking-wider text-faint">Paid</span>
+            )}
+            <span className="text-lg font-bold tracking-tight text-price">₹{price}</span>
+          </span>
         </div>
 
         {restaurantName && (
           <p className="flex min-w-0 items-center gap-1 text-[13px] text-muted">
             <MapPin aria-hidden="true" className="h-3.5 w-3.5 flex-shrink-0 text-accent" />
-            <span className="truncate">at {restaurantName}</span>
+            {preview ? (
+              <span className="truncate">at {restaurantName}</span>
+            ) : (
+              <Link
+                href={`/restaurants/${restaurantSlug(restaurantName)}`}
+                className="truncate hover:text-accent hover:underline"
+              >
+                at {restaurantName}
+              </Link>
+            )}
           </p>
         )}
 
@@ -119,14 +158,10 @@ export default function RecommendationCard({
             <blockquote className="line-clamp-3 text-[13px] italic leading-5 text-muted">
               &ldquo;{notes}&rdquo;
             </blockquote>
-            {reviewerName && (
-              <figcaption className="mt-1 text-right text-xs font-medium text-faint">
-                — {reviewerName}
-              </figcaption>
-            )}
+            {reviewerName && <ReviewerLine name={reviewerName} inFigure className="mt-1.5 justify-end" />}
           </figure>
         ) : (
-          reviewerName && <p className="text-xs font-medium text-faint">— {reviewerName}</p>
+          reviewerName && <ReviewerLine name={reviewerName} />
         )}
 
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
@@ -139,6 +174,9 @@ export default function RecommendationCard({
                   {likeCount}
                 </span>
                 <span className="inline-flex h-8 w-8 items-center justify-center text-faint">
+                  <Bookmark aria-hidden="true" className="h-4 w-4" />
+                </span>
+                <span className="inline-flex h-8 w-8 items-center justify-center text-faint">
                   <Flag aria-hidden="true" className="h-4 w-4" />
                 </span>
               </>
@@ -146,6 +184,7 @@ export default function RecommendationCard({
               <>
                 <OwnerActions id={id} />
                 <LikeButton id={id} initialLikeCount={likeCount} />
+                <SaveButton id={id} />
                 <ReportButton id={id} />
               </>
             )}

@@ -1,6 +1,5 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { ADMIN_COOKIE, isValidAdminToken } from "@/lib/admin";
+import { audit, getAdminSession } from "@/lib/admin";
 import { prisma } from "@/lib/db";
 
 function csvCell(value: string | number | null | undefined): string {
@@ -16,8 +15,8 @@ function csvRow(values: (string | number | null | undefined)[]): string {
 }
 
 export async function GET() {
-  const cookieStore = await cookies();
-  if (!isValidAdminToken(cookieStore.get(ADMIN_COOKIE)?.value)) {
+  const session = await getAdminSession();
+  if (!session) {
     return NextResponse.json({ error: "Not authorized." }, { status: 401 });
   }
 
@@ -64,6 +63,8 @@ export async function GET() {
   for (const entry of deletionLog) {
     csv += csvRow([entry.id, entry.dishName, entry.restaurantName, entry.deletedAt.toISOString()]);
   }
+
+  await audit(session.actor, "export_csv", { detail: `${recommendations.length} recommendations` });
 
   return new NextResponse(csv, {
     status: 200,

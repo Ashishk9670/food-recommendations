@@ -1,7 +1,7 @@
-import { cookies } from "next/headers";
 import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { ADMIN_COOKIE, isValidAdminToken } from "@/lib/admin";
+import { audit, getAdminSession } from "@/lib/admin";
+import { isCategory } from "@/lib/categories";
 import { prisma } from "@/lib/db";
 import { detectCategory } from "@/lib/detectCategory";
 import { deleteImage } from "@/lib/storage";
@@ -67,14 +67,20 @@ export async function PATCH(
 
   const body = await request.json().catch(() => null);
   const providedToken = request.headers.get("x-edit-token") ?? body?.editToken;
-  const cookieStore = await cookies();
-  const isAdmin = isValidAdminToken(cookieStore.get(ADMIN_COOKIE)?.value);
   const isOwner = !!providedToken && !!existing.editToken && providedToken === existing.editToken;
-  if (!isAdmin && !isOwner) {
+  if (!isOwner && !(await getAdminSession())) {
     return NextResponse.json({ error: "Not authorized." }, { status: 401 });
   }
 
-  const { dishName, restaurantName, rating: ratingRaw, price: priceRaw, reviewerName, notes } = body ?? {};
+  const {
+    dishName,
+    restaurantName,
+    rating: ratingRaw,
+    price: priceRaw,
+    reviewerName,
+    notes,
+    category,
+  } = body ?? {};
 
   if (typeof dishName !== "string" || !dishName.trim()) {
     return NextResponse.json({ error: "Dish name is required." }, { status: 400 });
@@ -144,7 +150,7 @@ export async function PATCH(
     where: { id: recommendationId },
     data: {
       dishName: dishName.trim(),
-      category: detectCategory(dishName),
+      category: isCategory(category) ? category : detectCategory(dishName),
       restaurantName: restaurantName.trim(),
       rating,
       price,
@@ -177,12 +183,12 @@ export async function DELETE(
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
-  const cookieStore = await cookies();
-  const isAdmin = isValidAdminToken(cookieStore.get(ADMIN_COOKIE)?.value);
   const providedToken = request.headers.get("x-edit-token");
   const isOwner =
     !!providedToken && !!recommendation.editToken && providedToken === recommendation.editToken;
-  if (!isAdmin && !isOwner) {
+  // The owner token wins: a submitter deleting their own post isn't an admin action.
+  const adminSession = isOwner ? null : await getAdminSession();
+  if (!isOwner && !adminSession) {
     return NextResponse.json({ error: "Not authorized." }, { status: 401 });
   }
 
@@ -190,6 +196,13 @@ export async function DELETE(
   await prisma.deletionLog.create({
     data: { dishName: recommendation.dishName, restaurantName: recommendation.restaurantName },
   });
+
+  if (adminSession) {
+    await audit(adminSession.actor, "delete_recommendation", {
+      targetId: recommendationId,
+      detail: `${recommendation.dishName} at ${recommendation.restaurantName}`,
+    });
+  }
 
   await Promise.all(recommendation.photos.map((photo) => deleteImage(photo.url).catch(() => {})));
 

@@ -1,6 +1,10 @@
 import { CATEGORIES, type Category } from "@/lib/categories";
 
-const KEYWORD_RULES: { category: Category; keywords: string[] }[] = [
+// First match wins, so order matters: the more specific dish style comes
+// before the main ingredient ("Chicken Manchurian" is Chinese, "Paneer Kathi
+// Roll" is a roll, "Paneer Dosa" is South Indian), and Chinese comes before
+// Rolls so a spring roll stays Chinese.
+export const KEYWORD_RULES: { category: Category; keywords: string[] }[] = [
   { category: "Biryani", keywords: ["biryani", "pulao", "pilaf"] },
   {
     category: "Chinese",
@@ -16,6 +20,38 @@ const KEYWORD_RULES: { category: Category; keywords: string[] }[] = [
       "spring roll",
       "dumpling",
       "momo",
+    ],
+  },
+  {
+    category: "Rolls & Bowls",
+    keywords: ["roll", "wrap", "kathi", "kati", "frankie", "shawarma", "burrito", "bowl"],
+  },
+  {
+    category: "South Indian",
+    keywords: [
+      "dosa",
+      "dosai",
+      "idli",
+      "idly",
+      "vada",
+      "vadai",
+      "uttapam",
+      "uthappam",
+      "sambar",
+      "rasam",
+      "pongal",
+      "upma",
+      "appam",
+      "puttu",
+      "pesarattu",
+      "bisi bele",
+      "curd rice",
+      "lemon rice",
+      "parotta",
+      "chettinad",
+      "ghee roast",
+      "avial",
+      "bonda",
     ],
   },
   { category: "Paneer", keywords: ["paneer", "cottage cheese"] },

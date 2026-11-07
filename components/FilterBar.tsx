@@ -113,7 +113,7 @@ export default function FilterBar({
         ))}
       </FilterRow>
 
-      <div className="flex flex-col gap-3 border-t border-border-subtle pt-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 border-t border-border-subtle pt-3 xl:flex-row xl:items-center xl:justify-between">
         <FilterRow label="Budget">
           <FilterPill href={buildHref(category, minStars, undefined, sort, q)} active={!maxPrice}>
             All prices

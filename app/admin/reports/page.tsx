@@ -1,20 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import AdminNav from "@/components/AdminNav";
 import CategoryBadge from "@/components/CategoryBadge";
 import DismissReportsButton from "@/components/DismissReportsButton";
-import { ADMIN_COOKIE, isValidAdminToken } from "@/lib/admin";
+import { requireAdminPage } from "@/lib/admin";
 import { prisma } from "@/lib/db";
 import { IMAGE_BLUR_DATA_URL } from "@/lib/imagePlaceholder";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminReportsPage() {
-  const cookieStore = await cookies();
-  if (!isValidAdminToken(cookieStore.get(ADMIN_COOKIE)?.value)) {
-    redirect("/admin/login");
-  }
+  const session = await requireAdminPage();
 
   const recommendations = await prisma.recommendation.findMany({
     where: { reportCount: { gt: 0 } },
@@ -24,14 +20,10 @@ export default async function AdminReportsPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-ink">
-          Moderation Queue ({recommendations.length})
-        </h1>
-        <Link href="/admin" className="text-sm font-semibold text-muted underline-offset-4 hover:text-ink hover:underline">
-          Back to dashboard
-        </Link>
-      </div>
+      <AdminNav session={session} current="reports" reportedCount={recommendations.length} />
+      <h1 className="mb-4 text-2xl font-bold text-ink">
+        Moderation Queue ({recommendations.length})
+      </h1>
 
       <div className="space-y-3">
         {recommendations.map((rec) => (

@@ -1,10 +1,12 @@
-import { Flame, Plus, Search, ShieldCheck, UtensilsCrossed } from "lucide-react";
+import { ArrowRight, Flame, Plus, Search, ShieldCheck, TrendingUp, UtensilsCrossed } from "lucide-react";
 import Link from "next/link";
 import type { Prisma } from "@/app/generated/prisma/client";
 import FilterBar from "@/components/FilterBar";
 import Pagination from "@/components/Pagination";
 import RecommendationCard from "@/components/RecommendationCard";
-import { CATEGORIES } from "@/lib/categories";
+import { isCategory } from "@/lib/categories";
+import { getCommunityStats } from "@/lib/community";
+import { OFFICE_HUB } from "@/lib/ratings";
 import {
   findMatchingRecommendationIds,
   getBrowseStats,
@@ -36,10 +38,7 @@ type HomeProps = {
 
 export default async function Home({ searchParams }: HomeProps) {
   const params = await searchParams;
-  const category =
-    params.category && CATEGORIES.includes(params.category as (typeof CATEGORIES)[number])
-      ? params.category
-      : undefined;
+  const category = isCategory(params.category) ? params.category : undefined;
   const minStars = params.minStars ? Number(params.minStars) : undefined;
   const maxPrice = params.maxPrice ? Number(params.maxPrice) : undefined;
   const sort: SortMode =
@@ -68,9 +67,10 @@ export default async function Home({ searchParams }: HomeProps) {
   const baseOrderBy = getOrderBy(sort);
   const orderBy = beforeCursor ? reverseOrderBy(baseOrderBy) : baseOrderBy;
 
-  const [rows, stats] = await Promise.all([
+  const [rows, stats, community] = await Promise.all([
     getRecommendationsPage(where, orderBy, PAGE_SIZE + 1),
     getBrowseStats(),
+    getCommunityStats(),
   ]);
   const hasMore = rows.length > PAGE_SIZE;
   const pageRows = rows.slice(0, PAGE_SIZE);
@@ -89,7 +89,7 @@ export default async function Home({ searchParams }: HomeProps) {
         <div className="max-w-2xl">
           <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.12em] text-accent">
             <Flame aria-hidden="true" className="h-3.5 w-3.5" />
-            Community gastronomy · Triomics
+            Community gastronomy · {OFFICE_HUB}
           </p>
           <h1 className="text-[30px] font-extrabold leading-[38px] tracking-tight text-ink sm:text-[40px] sm:leading-[48px]">
             Browse Recommendations
@@ -103,7 +103,7 @@ export default async function Home({ searchParams }: HomeProps) {
           <dl className="flex w-fit divide-x divide-border-subtle rounded-2xl border border-border-subtle bg-card px-1 py-3 shadow-card">
             <div className="px-5">
               <dt className="text-[11px] font-bold uppercase tracking-wider text-faint">Curated</dt>
-              <dd data-testid="stat-total" className="text-xl font-bold tracking-tight text-ink">
+              <dd data-testid="stat-total" className="whitespace-nowrap text-xl font-bold tracking-tight text-ink">
                 {stats.total} {stats.total === 1 ? "dish" : "dishes"}
               </dd>
             </div>
@@ -112,7 +112,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 <dt className="text-[11px] font-bold uppercase tracking-wider text-faint">
                   Top cuisine
                 </dt>
-                <dd data-testid="stat-top-cuisine" className="text-xl font-bold tracking-tight text-accent">
+                <dd data-testid="stat-top-cuisine" className="whitespace-nowrap text-xl font-bold tracking-tight text-accent">
                   {stats.topCategory}
                 </dd>
               </div>
@@ -150,12 +150,32 @@ export default async function Home({ searchParams }: HomeProps) {
       </section>
 
       {recommendations.length === 0 ? (
-        <div className="flex flex-col items-center rounded-2xl border border-dashed border-border-hover bg-card px-6 py-16 text-center">
+        <div
+          data-testid="empty-state"
+          className="flex flex-col items-center rounded-2xl border border-dashed border-border-hover bg-card px-6 py-16 text-center"
+        >
           <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-soft text-accent">
-            <UtensilsCrossed aria-hidden="true" className="h-6 w-6" />
+            {sort === "trending" ? (
+              <TrendingUp aria-hidden="true" className="h-6 w-6" />
+            ) : (
+              <UtensilsCrossed aria-hidden="true" className="h-6 w-6" />
+            )}
           </span>
-          <p className="mb-1 text-lg font-bold text-ink">No recommendations match these filters yet.</p>
-          <p className="mb-5 text-sm text-muted">Try widening the filters, or add the first one.</p>
+          {/* Trending only counts this week's posts, so "no matches" there
+              usually just means nobody has posted since Monday. */}
+          {sort === "trending" && !category && !minStars && !maxPrice && !q ? (
+            <>
+              <p className="mb-1 text-lg font-bold text-ink">Nothing trending this week yet.</p>
+              <p className="mb-5 text-sm text-muted">
+                Trending shows dishes posted since Monday, most liked first.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="mb-1 text-lg font-bold text-ink">No recommendations match these filters yet.</p>
+              <p className="mb-5 text-sm text-muted">Try widening the filters, or add the first one.</p>
+            </>
+          )}
           <Link
             href="/submit"
             className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary shadow-primary transition hover:bg-primary-hover"
@@ -223,16 +243,28 @@ export default async function Home({ searchParams }: HomeProps) {
         </>
       )}
 
-      <section className="mt-14 flex flex-col gap-3 rounded-2xl border border-border-subtle bg-card px-6 py-5 sm:flex-row sm:items-center">
+      <section className="mt-14 flex flex-col gap-4 rounded-2xl border border-border-subtle bg-card px-6 py-5 sm:flex-row sm:items-center">
         <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
           <ShieldCheck aria-hidden="true" className="h-5 w-5" />
         </span>
-        <div>
-          <p className="font-bold text-ink">Genuine peer recommendations</p>
-          <p className="text-sm text-muted">
-            No sponsored listings — every dish here was ordered, eaten and rated by a colleague.
+        <div className="flex-1">
+          <p className="font-bold text-ink">100% peer-submitted recommendations</p>
+          <p data-testid="trust-stats" className="text-sm text-muted">
+            Zero sponsored listings — {community.dishes} {community.dishes === 1 ? "dish" : "dishes"}{" "}
+            across {community.spots} {community.spots === 1 ? "spot" : "spots"}, each ordered, eaten and
+            rated by a Triomics teammate
+            {community.reviewers > 0 &&
+              ` (${community.reviewers} ${community.reviewers === 1 ? "has" : "have"} posted by name)`}
+            .
           </p>
         </div>
+        <Link
+          href="/restaurants"
+          className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full border-[1.5px] border-border-subtle px-4 py-2 text-sm font-semibold text-ink transition hover:border-border-hover hover:bg-card-muted"
+        >
+          View Curated Spots
+          <ArrowRight aria-hidden="true" className="h-4 w-4" />
+        </Link>
       </section>
     </div>
   );

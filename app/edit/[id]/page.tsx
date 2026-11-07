@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import CategoryBadge from "@/components/CategoryBadge";
+import CategoryPicker from "@/components/CategoryPicker";
 import StarRating from "@/components/StarRating";
+import { isCategory, type Category } from "@/lib/categories";
 import { detectCategory } from "@/lib/detectCategory";
 import {
   MAX_DISH_NAME_LENGTH,
@@ -31,6 +32,7 @@ export default function EditPage() {
   const [price, setPrice] = useState("");
   const [reviewerName, setReviewerName] = useState("");
   const [notes, setNotes] = useState("");
+  const [categoryOverride, setCategoryOverride] = useState<Category | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -56,6 +58,10 @@ export default function EditPage() {
       .then((data) => {
         if (!data) return;
         setDishName(data.dishName);
+        // Keep a category the poster chose by hand; otherwise follow detection.
+        if (isCategory(data.category) && data.category !== detectCategory(data.dishName)) {
+          setCategoryOverride(data.category);
+        }
         setRestaurantName(data.restaurantName ?? "");
         setRating(data.rating);
         setPrice(String(data.price));
@@ -134,7 +140,15 @@ export default function EditPage() {
       const res = await fetch(`/api/recommendations/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", "x-edit-token": token as string },
-        body: JSON.stringify({ dishName, restaurantName, rating, price, reviewerName, notes }),
+        body: JSON.stringify({
+          dishName,
+          restaurantName,
+          rating,
+          price,
+          reviewerName,
+          notes,
+          category: categoryOverride ?? detectedCategory,
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
@@ -164,11 +178,6 @@ export default function EditPage() {
             maxLength={MAX_DISH_NAME_LENGTH}
             className="w-full rounded-xl border-[1.5px] border-border-subtle bg-card px-3.5 py-2.5 text-[15px] text-ink placeholder:text-faint transition focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent/15"
           />
-          {dishName.trim() && (
-            <div className="mt-2 flex items-center gap-2 text-[13px] text-muted">
-              Detected category: <CategoryBadge category={detectedCategory} />
-            </div>
-          )}
         </div>
 
         <div>
@@ -184,6 +193,13 @@ export default function EditPage() {
             className="w-full rounded-xl border-[1.5px] border-border-subtle bg-card px-3.5 py-2.5 text-[15px] text-ink placeholder:text-faint transition focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent/15"
           />
         </div>
+
+        <CategoryPicker
+          detected={detectedCategory}
+          override={categoryOverride}
+          onOverride={setCategoryOverride}
+          showDetected={!!dishName.trim()}
+        />
 
         <div>
           <span className="mb-1 block text-sm font-medium text-ink">Rating</span>

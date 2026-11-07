@@ -14,6 +14,8 @@ export function saveOwnerToken(id: number, token: string) {
   const tokens = getOwnerTokens();
   tokens[id] = token;
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
+  // Same event lib/localLists listens to, so "My recommendations" updates.
+  window.dispatchEvent(new Event("local-lists-change"));
 }
 
 export function getOwnerToken(id: number): string | undefined {

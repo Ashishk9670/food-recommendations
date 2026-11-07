@@ -40,6 +40,9 @@ test("full recommendation lifecycle: submit, like, report, duplicate, edit, perm
     await page.goto("/submit");
     await page.getByLabel("Dish name").fill(dishName);
     await page.getByLabel("Restaurant / place").fill(restaurantName);
+    // The test dish name detects as "Other"; override it by hand.
+    await page.getByRole("radio", { name: "Paneer" }).click();
+    await expect(page.getByTestId("recommendation-preview")).toContainText("Paneer");
     await page.getByRole("button", { name: "Rate 4 stars" }).click();
     await page.getByLabel("Price after discount (₹)").fill("250");
     await page.getByLabel("Upload photos").setInputFiles([TEST_IMAGE, TEST_IMAGE_2]);
@@ -62,6 +65,7 @@ test("full recommendation lifecycle: submit, like, report, duplicate, edit, perm
     await expect(card.getByRole("heading", { name: dishName })).toBeVisible();
     await expect(card).toContainText(restaurantName);
     await expect(card).toContainText("₹250");
+    await expect(card.getByText("Paneer", { exact: true })).toBeVisible();
   });
 
   await test.step("permalink page shows the photo gallery and accepts a comment", async () => {
@@ -79,7 +83,7 @@ test("full recommendation lifecycle: submit, like, report, duplicate, edit, perm
 
   await test.step("like it — count increments and persists across reload", async () => {
     await page.goto(`/?q=${encodeURIComponent(dishName)}`);
-    const likeBtn = cardFor(dishName).locator("button[aria-pressed]");
+    const likeBtn = cardFor(dishName).getByRole("button", { name: /^Like/ });
     await expect(likeBtn).toHaveAttribute("aria-pressed", "false");
     await expect(likeBtn).toHaveText("0");
     await likeBtn.click();
@@ -88,7 +92,7 @@ test("full recommendation lifecycle: submit, like, report, duplicate, edit, perm
     await expect(likeBtn).toBeDisabled();
 
     await page.reload();
-    const likeBtnAfterReload = cardFor(dishName).locator("button[aria-pressed]");
+    const likeBtnAfterReload = cardFor(dishName).getByRole("button", { name: /^Like/ });
     await expect(likeBtnAfterReload).toHaveAttribute("aria-pressed", "true");
     await expect(likeBtnAfterReload).toHaveText("1");
     await expect(likeBtnAfterReload).toBeDisabled();
@@ -120,6 +124,8 @@ test("full recommendation lifecycle: submit, like, report, duplicate, edit, perm
     await page.goto(`/edit/${id}`);
     const dishInput = page.getByLabel("Dish name");
     await expect(dishInput).toHaveValue(dishName);
+    // The hand-picked category survives into the edit form.
+    await expect(page.getByRole("radio", { name: "Paneer" })).toHaveAttribute("aria-checked", "true");
     await dishInput.fill(editedDishName);
     await page.getByRole("button", { name: "Save Changes" }).click();
     await page.waitForURL("/");

@@ -8,8 +8,10 @@ import LikeButton from "@/components/LikeButton";
 import OwnerActions from "@/components/OwnerActions";
 import PhotoGallery from "@/components/PhotoGallery";
 import ReportButton from "@/components/ReportButton";
+import SaveButton from "@/components/SaveButton";
 import StarRating from "@/components/StarRating";
 import { prisma } from "@/lib/db";
+import { restaurantSlug } from "@/lib/slug";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -56,7 +58,12 @@ export default async function RecommendationPage({ params }: PageProps) {
           {recommendation.restaurantName && (
             <p className="-mt-2 flex items-center gap-1.5 text-muted">
               <MapPin aria-hidden="true" className="h-4 w-4 text-accent" />
-              at {recommendation.restaurantName}
+              <Link
+                href={`/restaurants/${restaurantSlug(recommendation.restaurantName)}`}
+                className="hover:text-accent hover:underline"
+              >
+                at {recommendation.restaurantName}
+              </Link>
             </p>
           )}
           <div className="flex items-center justify-between border-y border-border-subtle py-3">
@@ -83,6 +90,7 @@ export default async function RecommendationPage({ params }: PageProps) {
             <OwnerActions id={recommendation.id} />
             <div className="ml-auto flex items-center gap-1">
               <LikeButton id={recommendation.id} initialLikeCount={recommendation.likeCount} />
+              <SaveButton id={recommendation.id} size="lg" />
               <ReportButton id={recommendation.id} />
             </div>
           </div>

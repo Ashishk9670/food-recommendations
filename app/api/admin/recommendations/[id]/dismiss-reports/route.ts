@@ -1,7 +1,6 @@
-import { cookies } from "next/headers";
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
-import { ADMIN_COOKIE, isValidAdminToken } from "@/lib/admin";
+import { audit, getAdminSession } from "@/lib/admin";
 import { prisma } from "@/lib/db";
 import { RECOMMENDATIONS_TAG } from "@/lib/recommendations";
 
@@ -9,8 +8,8 @@ export async function POST(
   _request: Request,
   ctx: RouteContext<"/api/admin/recommendations/[id]/dismiss-reports">,
 ) {
-  const cookieStore = await cookies();
-  if (!isValidAdminToken(cookieStore.get(ADMIN_COOKIE)?.value)) {
+  const session = await getAdminSession();
+  if (!session) {
     return NextResponse.json({ error: "Not authorized." }, { status: 401 });
   }
 
@@ -29,6 +28,7 @@ export async function POST(
       prisma.recommendation.update({
         where: { id: recommendationId },
         data: { reportCount: 0 },
+        select: { dishName: true },
       }),
     ])
     .catch(() => null);
@@ -37,6 +37,10 @@ export async function POST(
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
+  await audit(session.actor, "dismiss_reports", {
+    targetId: recommendationId,
+    detail: `${result[1].dishName} (${result[0].count} report${result[0].count === 1 ? "" : "s"})`,
+  });
   revalidateTag(RECOMMENDATIONS_TAG, { expire: 0 });
 
   return NextResponse.json({ ok: true });

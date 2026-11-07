@@ -15,6 +15,9 @@ const eslintConfig = defineConfig([
     // Claude Code worktrees live inside the repo folder and carry their own
     // .next build output, which would otherwise flood `npm run lint`.
     ".claude/**",
+    // Playwright HTML reports and traces (generated, minified).
+    "playwright-report*/**",
+    "test-results/**",
   ]),
 ]);
 
