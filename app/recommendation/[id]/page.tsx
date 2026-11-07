@@ -1,3 +1,5 @@
+import { ArrowLeft, MapPin } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import CategoryBadge from "@/components/CategoryBadge";
 import CommentForm from "@/components/CommentForm";
@@ -33,42 +35,69 @@ export default async function RecommendationPage({ params }: PageProps) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-8 sm:py-10">
+      <Link
+        href="/"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-muted transition-colors hover:text-ink"
+      >
+        <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+        Back to browse
+      </Link>
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
         <PhotoGallery photos={recommendation.photos} alt={recommendation.dishName} />
-        <div className="space-y-3">
-          <div className="flex items-start justify-between gap-2">
-            <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">{recommendation.dishName}</h1>
-            <CategoryBadge category={recommendation.category} />
+        <div className="flex flex-col gap-4 rounded-2xl border border-border-subtle bg-card p-6 shadow-card">
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-[28px] font-extrabold leading-9 tracking-tight text-ink">
+              {recommendation.dishName}
+            </h1>
+            <CategoryBadge category={recommendation.category} className="mt-2 flex-shrink-0" />
           </div>
           {recommendation.restaurantName && (
-            <p className="text-stone-500 dark:text-stone-400">at {recommendation.restaurantName}</p>
+            <p className="-mt-2 flex items-center gap-1.5 text-muted">
+              <MapPin aria-hidden="true" className="h-4 w-4 text-accent" />
+              at {recommendation.restaurantName}
+            </p>
           )}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between border-y border-border-subtle py-3">
             <StarRating value={recommendation.rating} readOnly />
-            <span className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">₹{recommendation.price}</span>
+            <span className="text-2xl font-bold tracking-tight text-price">₹{recommendation.price}</span>
           </div>
-          {recommendation.notes && <p className="text-stone-600 dark:text-stone-400">{recommendation.notes}</p>}
-          {recommendation.reviewerName && (
-            <p className="text-sm text-stone-400 dark:text-stone-500">— {recommendation.reviewerName}</p>
+          {recommendation.notes ? (
+            <figure className="rounded-xl bg-card-muted px-4 py-3">
+              <blockquote className="italic leading-6 text-muted">
+                &ldquo;{recommendation.notes}&rdquo;
+              </blockquote>
+              {recommendation.reviewerName && (
+                <figcaption className="mt-1.5 text-right text-sm font-medium text-faint">
+                  — {recommendation.reviewerName}
+                </figcaption>
+              )}
+            </figure>
+          ) : (
+            recommendation.reviewerName && (
+              <p className="text-sm font-medium text-faint">— {recommendation.reviewerName}</p>
+            )
           )}
-          <div className="flex items-center justify-between pt-2">
-            <LikeButton id={recommendation.id} initialLikeCount={recommendation.likeCount} />
-            <ReportButton id={recommendation.id} />
+          <div className="mt-auto flex items-center justify-between pt-2">
+            <OwnerActions id={recommendation.id} />
+            <div className="ml-auto flex items-center gap-1">
+              <LikeButton id={recommendation.id} initialLikeCount={recommendation.likeCount} />
+              <ReportButton id={recommendation.id} />
+            </div>
           </div>
-          <OwnerActions id={recommendation.id} />
         </div>
       </div>
 
-      <div className="mt-10 space-y-4">
-        <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100">
+      <section className="mt-10 rounded-2xl border border-border-subtle bg-card p-6 shadow-card">
+        <h2 className="mb-4 text-lg font-bold tracking-tight text-ink">
           Comments ({recommendation.comments.length})
         </h2>
         <CommentList comments={recommendation.comments} />
-        <div className="border-t border-stone-200 pt-4 dark:border-stone-800">
+        <div className="mt-6 border-t border-border-subtle pt-6">
           <CommentForm recommendationId={recommendation.id} />
         </div>
-      </div>
+      </section>
     </div>
   );
 }

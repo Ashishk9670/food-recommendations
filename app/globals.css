@@ -1,5 +1,128 @@
 @import "tailwindcss";
 
+/* "Triomics Epice & Hearth" design tokens (Stitch export, DESIGN.md).
+   Components use the semantic utilities below (bg-canvas, text-ink, ...) and
+   never pair them with dark: variants — the dark theme is just a second set
+   of values for the same variables. */
+:root {
+  --canvas: #fdfbf7;
+  --card: #ffffff;
+  --card-muted: #f5f2ed;
+  --border-subtle: #eae3d9;
+  --border-hover: #d8cdbd;
+  --ink: #1a1d20;
+  --muted: #5f5850;
+  --faint: #8d847a;
+  /* Button fill; white text on it passes WCAG AA. */
+  --primary: #ab2f00;
+  --primary-hover: #8f2700;
+  --on-primary: #ffffff;
+  /* Primary-colored text/icons sitting on canvas or card. */
+  --accent: #ab2f00;
+  --accent-soft: #fdeee8;
+  --secondary: #e11d48;
+  --secondary-soft: #ffe4e6;
+  --price: #0d9488;
+  --star: #f59e0b;
+  --star-off: #e5e7eb;
+  --danger: #ba1a1a;
+  --danger-soft: #ffdad6;
+  --tag-biryani-bg: #fef3c7;
+  --tag-biryani-fg: #92400e;
+  --tag-chicken-bg: #ffe4e6;
+  --tag-chicken-fg: #9f1239;
+  --tag-paneer-bg: #dcfce7;
+  --tag-paneer-fg: #166534;
+  --tag-chinese-bg: #e0f2fe;
+  --tag-chinese-fg: #0369a1;
+  --tag-other-bg: #f1ede6;
+  --tag-other-fg: #5b4139;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #14110e;
+    --card: #1e1a16;
+    --card-muted: #27221d;
+    --border-subtle: #3a322a;
+    --border-hover: #54483c;
+    --ink: #f3eee7;
+    --muted: #b8ada0;
+    --faint: #8a7f73;
+    --primary: #c2410c;
+    --primary-hover: #d24a12;
+    --on-primary: #ffffff;
+    --accent: #ff9b73;
+    --accent-soft: #3a2117;
+    --secondary: #fb7185;
+    --secondary-soft: #3d1a22;
+    --price: #2dd4bf;
+    --star: #fbbf24;
+    --star-off: #423a32;
+    --danger: #fca5a5;
+    --danger-soft: #3f1d1d;
+    --tag-biryani-bg: rgb(245 158 11 / 0.16);
+    --tag-biryani-fg: #fcd34d;
+    --tag-chicken-bg: rgb(244 63 94 / 0.16);
+    --tag-chicken-fg: #fda4af;
+    --tag-paneer-bg: rgb(34 197 94 / 0.16);
+    --tag-paneer-fg: #86efac;
+    --tag-chinese-bg: rgb(14 165 233 / 0.16);
+    --tag-chinese-fg: #7dd3fc;
+    --tag-other-bg: rgb(255 255 255 / 0.08);
+    --tag-other-fg: #d6cfc6;
+  }
+}
+
+@theme inline {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  --color-canvas: var(--canvas);
+  --color-card: var(--card);
+  --color-card-muted: var(--card-muted);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-hover: var(--border-hover);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-soft: var(--secondary-soft);
+  --color-price: var(--price);
+  --color-star: var(--star);
+  --color-star-off: var(--star-off);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-tag-biryani-bg: var(--tag-biryani-bg);
+  --color-tag-biryani-fg: var(--tag-biryani-fg);
+  --color-tag-chicken-bg: var(--tag-chicken-bg);
+  --color-tag-chicken-fg: var(--tag-chicken-fg);
+  --color-tag-paneer-bg: var(--tag-paneer-bg);
+  --color-tag-paneer-fg: var(--tag-paneer-fg);
+  --color-tag-chinese-bg: var(--tag-chinese-bg);
+  --color-tag-chinese-fg: var(--tag-chinese-fg);
+  --color-tag-other-bg: var(--tag-other-bg);
+  --color-tag-other-fg: var(--tag-other-fg);
+
+  /* Elevation (DESIGN.md): resting card, hovered/open (warm tint), modal. */
+  --shadow-card: 0 1px 3px rgb(26 29 32 / 0.04), 0 6px 16px -2px rgb(26 29 32 / 0.03);
+  --shadow-card-hover: 0 10px 25px -4px rgb(171 47 0 / 0.1), 0 4px 12px -2px rgb(26 29 32 / 0.05);
+  --shadow-float: 0 20px 40px -8px rgb(26 29 32 / 0.16), 0 1px 3px rgb(26 29 32 / 0.06);
+  --shadow-primary: 0 4px 14px rgb(171 47 0 / 0.3);
+}
+
 body {
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Horizontal filter rows scroll on narrow screens without a visible bar. */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }

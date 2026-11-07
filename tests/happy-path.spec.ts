@@ -54,7 +54,7 @@ test("full recommendation lifecycle: submit, like, report, duplicate, edit, perm
   expect(Number.isInteger(id)).toBe(true);
 
   const cardFor = (name: string) =>
-    page.locator(".grid.gap-5 > div").filter({ hasText: name });
+    page.getByTestId("recommendation-card").filter({ hasText: name });
 
   await test.step("appears on the browse page with correct details", async () => {
     await page.goto(`/?q=${encodeURIComponent(dishName)}`);
@@ -80,14 +80,17 @@ test("full recommendation lifecycle: submit, like, report, duplicate, edit, perm
   await test.step("like it — count increments and persists across reload", async () => {
     await page.goto(`/?q=${encodeURIComponent(dishName)}`);
     const likeBtn = cardFor(dishName).locator("button[aria-pressed]");
-    await expect(likeBtn).toHaveText(/🤍\s*0/);
+    await expect(likeBtn).toHaveAttribute("aria-pressed", "false");
+    await expect(likeBtn).toHaveText("0");
     await likeBtn.click();
-    await expect(likeBtn).toHaveText(/❤️\s*1/);
+    await expect(likeBtn).toHaveAttribute("aria-pressed", "true");
+    await expect(likeBtn).toHaveText("1");
     await expect(likeBtn).toBeDisabled();
 
     await page.reload();
     const likeBtnAfterReload = cardFor(dishName).locator("button[aria-pressed]");
-    await expect(likeBtnAfterReload).toHaveText(/❤️\s*1/);
+    await expect(likeBtnAfterReload).toHaveAttribute("aria-pressed", "true");
+    await expect(likeBtnAfterReload).toHaveText("1");
     await expect(likeBtnAfterReload).toBeDisabled();
   });
 
@@ -135,7 +138,7 @@ test("full recommendation lifecycle: submit, like, report, duplicate, edit, perm
     ).toBeVisible();
 
     await freshPage.goto(`/?q=${encodeURIComponent(editedDishName)}`);
-    const freshCard = freshPage.locator(".grid.gap-5 > div").filter({ hasText: editedDishName });
+    const freshCard = freshPage.getByTestId("recommendation-card").filter({ hasText: editedDishName });
     await expect(freshCard.getByRole("link", { name: "Edit" })).toHaveCount(0);
     await expect(freshCard.getByRole("button", { name: "Delete" })).toHaveCount(0);
 
@@ -154,7 +157,7 @@ test("full recommendation lifecycle: submit, like, report, duplicate, edit, perm
 
   await test.step("moderation queue lists it and can dismiss the report", async () => {
     await page.goto("/admin/reports");
-    const queueRow = page.locator("div.rounded-xl").filter({ hasText: editedDishName });
+    const queueRow = page.getByTestId("admin-row").filter({ hasText: editedDishName });
     await expect(queueRow.getByText(/1 report/)).toBeVisible();
 
     await queueRow.getByRole("button", { name: "Dismiss reports" }).click();
@@ -176,7 +179,7 @@ test("full recommendation lifecycle: submit, like, report, duplicate, edit, perm
   });
 
   await test.step("admin deletes it", async () => {
-    const adminRow = page.locator("div.rounded-xl").filter({ hasText: editedDishName });
+    const adminRow = page.getByTestId("admin-row").filter({ hasText: editedDishName });
     await adminRow.getByRole("button", { name: "Delete" }).click();
     await expect(page.getByText(editedDishName)).toHaveCount(0);
 

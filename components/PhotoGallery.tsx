@@ -16,7 +16,7 @@ export default function PhotoGallery({
 
   return (
     <div className="space-y-2">
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-orange-50 dark:bg-stone-800">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-card-muted">
         <Image
           src={active.url}
           alt={alt}
@@ -36,8 +36,8 @@ export default function PhotoGallery({
               onClick={() => setSelected(index)}
               className={`relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg ring-2 transition-colors ${
                 index === selected
-                  ? "ring-orange-500"
-                  : "ring-transparent hover:ring-orange-200 dark:hover:ring-stone-600"
+                  ? "ring-accent"
+                  : "ring-transparent hover:ring-border-hover"
               }`}
             >
               <Image

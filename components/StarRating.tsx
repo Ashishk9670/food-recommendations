@@ -1,5 +1,7 @@
 "use client";
 
+import { Star } from "lucide-react";
+
 type StarRatingProps = {
   value: number;
   onChange?: (value: number) => void;
@@ -13,34 +15,45 @@ export default function StarRating({
   readOnly = false,
   size = "sm",
 }: StarRatingProps) {
-  const textSize = size === "lg" ? "text-3xl" : "text-lg";
-  // extra padding on the interactive variant keeps each star's tap target close to the
-  // ~44px minimum recommended for touchscreens, since the glyph alone is much smaller;
-  // the padding itself provides spacing, so no gap is needed on the container
-  const tapPadding = readOnly ? "" : "p-2";
+  const iconSize = size === "lg" ? "h-8 w-8" : "h-4 w-4";
+
+  if (readOnly) {
+    return (
+      <div className="flex gap-0.5" aria-label={`${value} out of 5 stars`} role="img">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            aria-hidden="true"
+            className={`${iconSize} ${star <= value ? "fill-star text-star" : "fill-star-off text-star-off"}`}
+            strokeWidth={1.5}
+          />
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <div className={`flex ${readOnly ? "gap-0.5" : ""} ${textSize}`}>
+    <div className="flex">
       {[1, 2, 3, 4, 5].map((star) => (
-        <span
+        // p-1.5 keeps each tap target near the ~44px touch guideline.
+        <button
           key={star}
-          role={readOnly ? undefined : "button"}
-          aria-label={readOnly ? undefined : `Rate ${star} star${star > 1 ? "s" : ""}`}
-          onClick={readOnly ? undefined : () => onChange?.(star)}
-          className={
-            readOnly
-              ? star <= value
-                ? "text-amber-400"
-                : "text-gray-300 dark:text-stone-600"
-              : `inline-block cursor-pointer transition-colors ${tapPadding} ${
-                  star <= value
-                    ? "text-amber-400"
-                    : "text-gray-300 hover:text-amber-300 dark:text-stone-600 dark:hover:text-amber-400"
-                }`
-          }
+          type="button"
+          aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
+          aria-pressed={star <= value}
+          onClick={() => onChange?.(star)}
+          className="group rounded-full p-1.5 transition-transform hover:scale-110 focus-visible:outline-2 focus-visible:outline-accent"
         >
-          ★
-        </span>
+          <Star
+            aria-hidden="true"
+            className={`${iconSize} transition-colors ${
+              star <= value
+                ? "fill-star text-star"
+                : "fill-transparent text-faint group-hover:text-star"
+            }`}
+            strokeWidth={1.75}
+          />
+        </button>
       ))}
     </div>
   );

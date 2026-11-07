@@ -1,5 +1,6 @@
 "use client";
 
+import { Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const STORAGE_KEY = "likedRecommendationIds";
@@ -57,13 +58,18 @@ export default function LikeButton({
       onClick={handleLike}
       disabled={liked || submitting}
       aria-pressed={liked}
-      className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-medium transition-colors disabled:cursor-default ${
+      aria-label={liked ? `Liked, ${likeCount}` : `Like, ${likeCount}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-semibold transition-colors disabled:cursor-default ${
         liked
-          ? "bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400"
-          : "bg-orange-50 text-stone-500 hover:bg-rose-50 dark:bg-stone-800 dark:text-stone-400 dark:hover:bg-rose-950/30"
+          ? "bg-secondary-soft text-secondary"
+          : "text-muted hover:bg-secondary-soft hover:text-secondary"
       }`}
     >
-      <span>{liked ? "❤️" : "🤍"}</span>
+      <Heart
+        aria-hidden="true"
+        className={`h-[18px] w-[18px] ${liked ? "fill-secondary" : ""}`}
+        strokeWidth={2}
+      />
       <span>{likeCount}</span>
     </button>
   );

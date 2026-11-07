@@ -1,5 +1,6 @@
 "use client";
 
+import { Bell } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getLastSeen, markSeen } from "@/lib/notificationState";
@@ -86,13 +87,13 @@ export default function NotificationBell() {
         onClick={toggle}
         aria-label={count > 0 ? `Notifications, ${count} new` : "Notifications"}
         aria-expanded={open}
-        className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-white/15 text-lg text-white transition-colors hover:bg-white/25"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full text-muted transition-colors hover:bg-card-muted hover:text-ink"
       >
-        <span aria-hidden="true">🔔</span>
+        <Bell aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
         {count > 0 && (
           <span
             data-testid="notification-count"
-            className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-xs font-semibold leading-none text-white ring-2 ring-white"
+            className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary px-1 text-[11px] font-bold leading-none text-white ring-2 ring-card"
           >
             {count > 9 ? "9+" : count}
           </span>
@@ -103,27 +104,27 @@ export default function NotificationBell() {
         // On phones the bell isn't flush right ("+ Submit" sits beside it), so a
         // right-anchored 18rem panel would hang off the left edge — pin it to
         // the viewport there instead, and anchor it to the bell from sm up.
-        <div className="fixed inset-x-4 top-16 z-50 overflow-hidden rounded-xl border border-orange-100 bg-white shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-72 dark:border-stone-800 dark:bg-stone-900">
-          <p className="border-b border-orange-100 px-4 py-2.5 text-sm font-semibold text-stone-900 dark:border-stone-800 dark:text-stone-100">
+        <div className="fixed inset-x-4 top-[4.5rem] z-50 overflow-hidden rounded-2xl border border-border-subtle bg-card shadow-float sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80">
+          <p className="border-b border-border-subtle px-4 py-3 text-xs font-bold uppercase tracking-wider text-muted">
             New recommendations
           </p>
           {shown.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-stone-500 dark:text-stone-400">
+            <p className="px-4 py-8 text-center text-sm text-muted">
               Nothing new since you last checked.
             </p>
           ) : (
-            <ul className="max-h-80 overflow-y-auto">
+            <ul className="max-h-80 overflow-y-auto py-1">
               {shown.map((item) => (
                 <li key={item.id}>
                   <Link
                     href={`/recommendation/${item.id}`}
                     onClick={() => setOpen(false)}
-                    className="block px-4 py-2.5 hover:bg-orange-50 dark:hover:bg-stone-800"
+                    className="block px-4 py-2.5 transition-colors hover:bg-card-muted"
                   >
-                    <span className="block truncate text-sm font-medium text-stone-900 dark:text-stone-100">
+                    <span className="block truncate text-sm font-semibold text-ink">
                       {item.dishName}
                     </span>
-                    <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
+                    <span className="block truncate text-xs text-muted">
                       at {item.restaurantName}
                     </span>
                   </Link>

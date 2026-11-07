@@ -25,10 +25,10 @@ export default async function AdminReportsPage() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+        <h1 className="text-2xl font-bold text-ink">
           Moderation Queue ({recommendations.length})
         </h1>
-        <Link href="/admin" className="text-sm font-medium text-slate-500 underline hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">
+        <Link href="/admin" className="text-sm font-semibold text-muted underline-offset-4 hover:text-ink hover:underline">
           Back to dashboard
         </Link>
       </div>
@@ -37,9 +37,10 @@ export default async function AdminReportsPage() {
         {recommendations.map((rec) => (
           <div
             key={rec.id}
-            className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:gap-4 dark:border-slate-800 dark:bg-slate-900"
+            data-testid="admin-row"
+            className="flex flex-col gap-3 rounded-2xl border border-border-subtle bg-card p-3 shadow-card sm:flex-row sm:items-center sm:gap-4"
           >
-            <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+            <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-card-muted">
               {rec.photos[0] && (
                 <Image
                   src={rec.photos[0].url}
@@ -54,20 +55,20 @@ export default async function AdminReportsPage() {
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <h3 className="truncate font-semibold text-slate-900 dark:text-slate-100">{rec.dishName}</h3>
+                <h3 className="truncate font-semibold text-ink">{rec.dishName}</h3>
                 <CategoryBadge category={rec.category} />
-                <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                <span className="rounded-full bg-danger-soft px-2 py-0.5 text-xs font-semibold text-danger">
                   🚩 {rec.reportCount} report{rec.reportCount > 1 ? "s" : ""}
                 </span>
               </div>
               {rec.restaurantName && (
-                <p className="truncate text-sm text-slate-500 dark:text-slate-400">at {rec.restaurantName}</p>
+                <p className="truncate text-sm text-muted">at {rec.restaurantName}</p>
               )}
             </div>
             <div className="flex gap-2">
               <Link
                 href={`/recommendation/${rec.id}`}
-                className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                className="rounded-lg bg-card-muted px-3 py-1.5 text-sm font-semibold text-ink hover:bg-border-subtle"
               >
                 View
               </Link>
@@ -76,7 +77,7 @@ export default async function AdminReportsPage() {
           </div>
         ))}
         {recommendations.length === 0 && (
-          <p className="py-12 text-center text-slate-500 dark:text-slate-400">No unresolved reports.</p>
+          <p className="py-12 text-center text-muted">No unresolved reports.</p>
         )}
       </div>
     </div>

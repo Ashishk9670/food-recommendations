@@ -20,6 +20,24 @@ export const getRecommendationsPage = unstable_cache(
   { tags: [RECOMMENDATIONS_TAG], revalidate: 60 },
 );
 
+// Hero stats panel. Shares the tag so it refreshes on every create/delete.
+export const getBrowseStats = unstable_cache(
+  async () => {
+    const [total, byCategory] = await Promise.all([
+      prisma.recommendation.count(),
+      prisma.recommendation.groupBy({
+        by: ["category"],
+        _count: { category: true },
+        orderBy: { _count: { category: "desc" } },
+        take: 1,
+      }),
+    ]);
+    return { total, topCategory: byCategory[0]?.category ?? null };
+  },
+  ["browse-stats"],
+  { tags: [RECOMMENDATIONS_TAG], revalidate: 60 },
+);
+
 // word_similarity() (not plain similarity()) — dish names are multi-word
 // phrases, and plain similarity() scores a short/typo'd query against the
 // *entire* string, which comes out far too low even for an obvious match

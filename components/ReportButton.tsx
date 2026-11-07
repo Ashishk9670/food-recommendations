@@ -1,5 +1,6 @@
 "use client";
 
+import { Flag } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const STORAGE_KEY = "reportedRecommendationIds";
@@ -48,9 +49,13 @@ export default function ReportButton({ id, className = "" }: { id: number; class
       type="button"
       onClick={handleReport}
       disabled={reported || submitting}
-      className={`text-xs font-medium text-stone-400 hover:text-red-500 disabled:cursor-default disabled:hover:text-stone-400 dark:text-stone-500 dark:hover:text-red-400 dark:disabled:hover:text-stone-500 ${className}`}
+      aria-label={reported ? "Reported" : "Report"}
+      title={reported ? "Reported" : "Report as inappropriate or inaccurate"}
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors disabled:cursor-default ${
+        reported ? "text-danger" : "text-faint hover:bg-danger-soft hover:text-danger"
+      } ${className}`}
     >
-      {reported ? "Reported" : "🚩 Report"}
+      <Flag aria-hidden="true" className={`h-4 w-4 ${reported ? "fill-danger" : ""}`} strokeWidth={2} />
     </button>
   );
 }

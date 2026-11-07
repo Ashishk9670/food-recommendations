@@ -35,15 +35,18 @@ export default function OwnerActions({ id }: { id: number }) {
   }
 
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <Link href={`/edit/${id}`} className="font-medium text-orange-600 hover:underline">
+    <div className="flex items-center gap-1 text-xs font-semibold">
+      <Link
+        href={`/edit/${id}`}
+        className="rounded-full px-2.5 py-1 text-accent transition-colors hover:bg-accent-soft"
+      >
         Edit
       </Link>
       <button
         type="button"
         onClick={handleDelete}
         disabled={deleting}
-        className="font-medium text-red-600 hover:underline disabled:opacity-50"
+        className="rounded-full px-2.5 py-1 text-danger transition-colors hover:bg-danger-soft disabled:opacity-50"
       >
         {deleting ? "Deleting..." : "Delete"}
       </button>

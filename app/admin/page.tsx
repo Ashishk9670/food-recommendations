@@ -26,26 +26,26 @@ export default async function AdminPage() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+        <h1 className="text-2xl font-bold text-ink">
           Admin Dashboard ({recommendations.length})
         </h1>
         <div className="flex items-center gap-4">
           <Link
             href="/admin/reports"
-            className="text-sm font-medium text-slate-500 underline hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+            className="text-sm font-semibold text-muted underline-offset-4 hover:text-ink hover:underline"
           >
             Moderation queue{reportedCount > 0 ? ` (${reportedCount})` : ""}
           </Link>
           <a
             href="/api/admin/export"
-            className="text-sm font-medium text-slate-500 underline hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+            className="text-sm font-semibold text-muted underline-offset-4 hover:text-ink hover:underline"
           >
             Export CSV
           </a>
           <form action="/api/admin/logout" method="post">
             <button
               type="submit"
-              className="text-sm font-medium text-slate-500 underline hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+              className="text-sm font-semibold text-muted underline-offset-4 hover:text-ink hover:underline"
             >
               Log out
             </button>
@@ -57,9 +57,10 @@ export default async function AdminPage() {
         {recommendations.map((rec) => (
           <div
             key={rec.id}
-            className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:gap-4 dark:border-slate-800 dark:bg-slate-900"
+            data-testid="admin-row"
+            className="flex flex-col gap-3 rounded-2xl border border-border-subtle bg-card p-3 shadow-card sm:flex-row sm:items-center sm:gap-4"
           >
-            <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+            <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-card-muted">
               {rec.photos[0] && (
                 <Image
                   src={rec.photos[0].url}
@@ -74,31 +75,31 @@ export default async function AdminPage() {
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <h3 className="truncate font-semibold text-slate-900 dark:text-slate-100">{rec.dishName}</h3>
+                <h3 className="truncate font-semibold text-ink">{rec.dishName}</h3>
                 <CategoryBadge category={rec.category} />
                 {rec.reportCount > 0 && (
-                  <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                  <span className="rounded-full bg-danger-soft px-2 py-0.5 text-xs font-semibold text-danger">
                     🚩 {rec.reportCount} report{rec.reportCount > 1 ? "s" : ""}
                   </span>
                 )}
               </div>
               {rec.restaurantName && (
-                <p className="truncate text-sm text-slate-500 dark:text-slate-400">at {rec.restaurantName}</p>
+                <p className="truncate text-sm text-muted">at {rec.restaurantName}</p>
               )}
               <div className="flex items-center gap-3">
                 <StarRating value={rec.rating} readOnly />
-                <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">₹{rec.price}</span>
-                <span className="text-sm text-slate-500 dark:text-slate-400">❤️ {rec.likeCount}</span>
+                <span className="text-sm font-semibold text-price">₹{rec.price}</span>
+                <span className="text-sm text-muted">❤️ {rec.likeCount}</span>
               </div>
               {rec.reviewerName && (
-                <p className="text-xs text-slate-400 dark:text-slate-500">— {rec.reviewerName}</p>
+                <p className="text-xs text-faint">— {rec.reviewerName}</p>
               )}
             </div>
             <DeleteRecommendationButton id={rec.id} />
           </div>
         ))}
         {recommendations.length === 0 && (
-          <p className="py-12 text-center text-slate-500 dark:text-slate-400">No recommendations yet.</p>
+          <p className="py-12 text-center text-muted">No recommendations yet.</p>
         )}
       </div>
     </div>

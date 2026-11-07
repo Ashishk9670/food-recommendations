@@ -36,26 +36,26 @@ export default function Pagination({
   }
 
   return (
-    <div className="mt-8 flex items-center justify-center gap-4">
+    <div className="mt-10 flex items-center justify-center gap-3">
       {hasPrevious ? (
         <Link
           href={buildHref("prev", prevCursor)}
-          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-stone-600 ring-1 ring-orange-100 hover:bg-orange-100 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700 dark:hover:bg-stone-800"
+          className="rounded-full border-[1.5px] border-border-subtle bg-card px-5 py-2 text-sm font-semibold text-ink shadow-card transition hover:border-border-hover hover:bg-card-muted"
         >
           ← Previous
         </Link>
       ) : (
-        <span className="rounded-lg px-4 py-2 text-sm font-medium text-stone-300 dark:text-stone-700">← Previous</span>
+        <span className="rounded-full px-5 py-2 text-sm font-semibold text-border-hover">← Previous</span>
       )}
       {hasNext ? (
         <Link
           href={buildHref("next", nextCursor)}
-          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-stone-600 ring-1 ring-orange-100 hover:bg-orange-100 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700 dark:hover:bg-stone-800"
+          className="rounded-full border-[1.5px] border-border-subtle bg-card px-5 py-2 text-sm font-semibold text-ink shadow-card transition hover:border-border-hover hover:bg-card-muted"
         >
           Next →
         </Link>
       ) : (
-        <span className="rounded-lg px-4 py-2 text-sm font-medium text-stone-300 dark:text-stone-700">Next →</span>
+        <span className="rounded-full px-5 py-2 text-sm font-semibold text-border-hover">Next →</span>
       )}
     </div>
   );

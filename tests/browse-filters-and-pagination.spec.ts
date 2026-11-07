@@ -62,17 +62,17 @@ test.describe("browse filters, search, sort, and pagination", () => {
     await page.getByRole("button", { name: "Search" }).click();
     await page.waitForURL(/q=Qxvbrowse/);
 
-    await expect(page.locator(".grid.gap-5 > div")).toHaveCount(12);
+    await expect(page.getByTestId("recommendation-card")).toHaveCount(12);
     await expect(page.getByRole("link", { name: "← Previous" })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Next →" })).toHaveCount(1);
 
     await page.getByRole("link", { name: "Next →" }).click();
-    await expect(page.locator(".grid.gap-5 > div")).toHaveCount(3); // 15 seeded rows total (14 + 1 fuzzy-search target)
+    await expect(page.getByTestId("recommendation-card")).toHaveCount(3); // 15 seeded rows total (14 + 1 fuzzy-search target)
     await expect(page.getByRole("link", { name: "Next →" })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "← Previous" })).toHaveCount(1);
 
     await page.getByRole("link", { name: "← Previous" }).click();
-    await expect(page.locator(".grid.gap-5 > div")).toHaveCount(12);
+    await expect(page.getByTestId("recommendation-card")).toHaveCount(12);
     await expect(page.getByRole("link", { name: "← Previous" })).toHaveCount(0);
   });
 
@@ -81,7 +81,7 @@ test.describe("browse filters, search, sort, and pagination", () => {
     await page.getByRole("link", { name: "Paneer", exact: true }).click();
     await page.waitForURL(/category=Paneer/);
 
-    const cards = page.locator(".grid.gap-5 > div");
+    const cards = page.getByTestId("recommendation-card");
     await expect(cards).toHaveCount(3); // indices 2, 7, 12
     for (const card of await cards.all()) {
       await expect(card.getByText("Paneer", { exact: true })).toBeVisible();
@@ -94,7 +94,7 @@ test.describe("browse filters, search, sort, and pagination", () => {
     await page.waitForURL(/minStars=4/);
 
     // ratings are (index % 5) + 1 -> indices 3,8,13 (rating 4) and 4,9 (rating 5)
-    await expect(page.locator(".grid.gap-5 > div")).toHaveCount(5);
+    await expect(page.getByTestId("recommendation-card")).toHaveCount(5);
   });
 
   test("price filter combines correctly with an active search", async ({ page }) => {
@@ -103,7 +103,7 @@ test.describe("browse filters, search, sort, and pagination", () => {
     await page.waitForURL(/maxPrice=200/);
 
     // prices are 100 + index*50 -> indices 0 (100), 1 (150), 2 (200)
-    await expect(page.locator(".grid.gap-5 > div")).toHaveCount(3);
+    await expect(page.getByTestId("recommendation-card")).toHaveCount(3);
   });
 
   test("Most liked sort orders seeded rows by like count descending", async ({ page }) => {
@@ -112,7 +112,7 @@ test.describe("browse filters, search, sort, and pagination", () => {
     await page.waitForURL(/sort=liked/);
 
     // likeCount equals the seed index, so index 13 (highest) sorts first.
-    const firstCard = page.locator(".grid.gap-5 > div").first();
+    const firstCard = page.getByTestId("recommendation-card").first();
     await expect(firstCard.getByRole("heading", { name: seedDishName(13) })).toBeVisible();
   });
 
@@ -122,7 +122,7 @@ test.describe("browse filters, search, sort, and pagination", () => {
     await page.waitForURL(/sort=rating/);
 
     // indices 4 and 9 both have rating 5; index 4 has the more recent createdAt.
-    const firstCard = page.locator(".grid.gap-5 > div").first();
+    const firstCard = page.getByTestId("recommendation-card").first();
     await expect(firstCard.getByRole("heading", { name: seedDishName(4) })).toBeVisible();
   });
 
@@ -133,7 +133,7 @@ test.describe("browse filters, search, sort, and pagination", () => {
 
     // all seeded rows are timestamped within the last few minutes (well inside
     // the current ISO week), so trending should order them exactly like "Most liked".
-    const firstCard = page.locator(".grid.gap-5 > div").first();
+    const firstCard = page.getByTestId("recommendation-card").first();
     await expect(firstCard.getByRole("heading", { name: seedDishName(13) })).toBeVisible();
   });
 
@@ -167,5 +167,29 @@ test.describe("browse filters, search, sort, and pagination", () => {
 
     await expect(page.getByText("No recommendations match these filters yet.")).toBeVisible();
     await expect(page.getByRole("link", { name: "Be the first to submit one" })).toBeVisible();
+  });
+
+  test("the closing call-to-action tile only appears on the last page", async ({ page }) => {
+    const cta = page.getByRole("heading", { name: "Tried something memorable today?" });
+
+    // Page 1 of the 15 seeded rows is a full 12 with a next page: no tile.
+    await page.goto(`/?q=${SEED_PREFIX}`);
+    await expect(page.getByTestId("recommendation-card")).toHaveCount(12);
+    await expect(cta).toHaveCount(0);
+
+    await page.getByRole("link", { name: "Next →" }).click();
+    await expect(page.getByTestId("recommendation-card")).toHaveCount(3);
+    await expect(cta).toBeVisible();
+  });
+
+  test("the stats panel reflects real data", async ({ page }) => {
+    await page.goto("/");
+    // Other spec files seed rows concurrently, so assert a floor (this file's
+    // own 15 rows), not an exact total.
+    const total = Number((await page.getByTestId("stat-total").innerText()).split(" ")[0]);
+    expect(total).toBeGreaterThanOrEqual(ROW_COUNT + 1);
+    await expect(page.getByTestId("stat-top-cuisine")).toHaveText(
+      new RegExp(`^(${CATEGORIES.join("|")})$`),
+    );
   });
 });

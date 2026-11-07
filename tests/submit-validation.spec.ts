@@ -1,5 +1,7 @@
+import fs from "node:fs";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
+import { gotoSubmitReady } from "./helpers/navigation";
 
 const TEST_IMAGE = path.join(__dirname, "fixtures/test-dish.png");
 const TEST_IMAGE_2 = path.join(__dirname, "fixtures/test-dish-2.png");
@@ -89,23 +91,27 @@ test.describe("submit form validation", () => {
     await page.goto("/submit");
     const dishName = page.getByLabel("Dish name");
 
+    // Scoped to the detection area: the live card preview shows the same
+    // category badge, so a page-wide text match would find two.
+    const detected = page.getByTestId("detected-category");
+
     await dishName.fill("Hyderabadi Chicken Biryani");
-    await expect(page.getByText("Detected category:")).toBeVisible();
-    await expect(page.getByText("Biryani", { exact: true })).toBeVisible();
+    await expect(detected).toContainText("Detected category:");
+    await expect(detected.getByText("Biryani", { exact: true })).toBeVisible();
 
     // Chinese keywords are checked before Chicken, so a dish naming both
     // should be classified as Chinese, not Chicken.
     await dishName.fill("Chicken Manchurian");
-    await expect(page.getByText("Chinese", { exact: true })).toBeVisible();
+    await expect(detected.getByText("Chinese", { exact: true })).toBeVisible();
 
     await dishName.fill("Butter Chicken");
-    await expect(page.getByText("Chicken", { exact: true })).toBeVisible();
+    await expect(detected.getByText("Chicken", { exact: true })).toBeVisible();
 
     await dishName.fill("Paneer Tikka");
-    await expect(page.getByText("Paneer", { exact: true })).toBeVisible();
+    await expect(detected.getByText("Paneer", { exact: true })).toBeVisible();
 
     await dishName.fill("Mystery Dessert");
-    await expect(page.getByText("Other", { exact: true })).toBeVisible();
+    await expect(detected.getByText("Other", { exact: true })).toBeVisible();
   });
 
   test("the camera button only shows on phone-sized viewports; upload always shows", async ({
@@ -127,7 +133,7 @@ test.describe("submit form validation", () => {
   test("taking a photo adds to the selection instead of replacing what was already uploaded", async ({
     page,
   }) => {
-    await page.goto("/submit");
+    await gotoSubmitReady(page);
 
     await page.getByLabel("Upload photos").setInputFiles([TEST_IMAGE, TEST_IMAGE_2]);
     await expect(page.getByAltText(/^Preview/)).toHaveCount(2);
@@ -137,5 +143,60 @@ test.describe("submit form validation", () => {
     // append, not replace, the two already chosen via upload.
     await page.getByLabel("Take photo").setInputFiles(TEST_IMAGE);
     await expect(page.getByAltText(/^Preview/)).toHaveCount(3);
+  });
+
+  test("the live card preview mirrors the form as you type", async ({ page }) => {
+    await page.goto("/submit");
+    const preview = page.getByTestId("recommendation-preview");
+    await expect(preview.getByRole("heading", { name: "Your dish name" })).toBeVisible();
+
+    await page.getByLabel("Dish name").fill("Masala Dosa");
+    await page.getByLabel("Restaurant / place").fill("Vidyarthi Bhavan");
+    await page.getByLabel("Price after discount (₹)").fill("120");
+    await page.getByRole("button", { name: "Rate 4 stars" }).click();
+
+    await expect(preview.getByRole("heading", { name: "Masala Dosa" })).toBeVisible();
+    await expect(preview).toContainText("at Vidyarthi Bhavan");
+    await expect(preview).toContainText("₹120");
+    await expect(preview).toContainText("4.0");
+  });
+
+  test("discard draft clears everything entered", async ({ page }) => {
+    page.on("dialog", (dialog) => dialog.accept());
+    await page.goto("/submit");
+    const discard = page.getByRole("button", { name: "Discard draft" });
+    await expect(discard).toBeDisabled();
+
+    await page.getByLabel("Dish name").fill("Masala Dosa");
+    await page.getByLabel("Price after discount (₹)").fill("120");
+    await page.getByRole("button", { name: "Rate 4 stars" }).click();
+    await page.getByLabel("Upload photos").setInputFiles(TEST_IMAGE);
+    await expect(page.getByAltText("Preview 1")).toBeVisible();
+
+    await discard.click();
+    await expect(page.getByLabel("Dish name")).toHaveValue("");
+    await expect(page.getByLabel("Price after discount (₹)")).toHaveValue("");
+    await expect(page.getByRole("button", { name: "Rate 1 star", exact: true })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    await expect(page.getByAltText(/^Preview/)).toHaveCount(0);
+    await expect(discard).toBeDisabled();
+  });
+
+  test("dropping an image onto the photo zone adds it, ignoring non-images", async ({ page }) => {
+    await gotoSubmitReady(page);
+    const pngBase64 = fs.readFileSync(TEST_IMAGE).toString("base64");
+
+    const dataTransfer = await page.evaluateHandle((b64) => {
+      const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      const dt = new DataTransfer();
+      dt.items.add(new File([bytes], "dish.png", { type: "image/png" }));
+      dt.items.add(new File(["not an image"], "notes.txt", { type: "text/plain" }));
+      return dt;
+    }, pngBase64);
+    await page.getByTestId("photo-dropzone").dispatchEvent("drop", { dataTransfer });
+
+    await expect(page.getByAltText(/^Preview/)).toHaveCount(1);
   });
 });

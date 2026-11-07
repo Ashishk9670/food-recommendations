@@ -36,7 +36,7 @@ test("admin can delete a recommendation from the dashboard", async ({ page }) =>
   await page.getByRole("button", { name: "Log In" }).click();
   await page.waitForURL("/admin");
 
-  const row = page.locator("div.rounded-xl").filter({ hasText: dishName });
+  const row = page.getByTestId("admin-row").filter({ hasText: dishName });
   await expect(row).toBeVisible();
 
   await row.getByRole("button", { name: "Delete" }).click();
