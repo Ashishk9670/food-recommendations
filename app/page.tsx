@@ -185,10 +185,12 @@ export default async function Home({ searchParams }: HomeProps) {
         </div>
       ) : (
         <>
+          <h2 className="sr-only">Recommendations</h2>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {recommendations.map((rec) => (
+            {recommendations.map((rec, index) => (
               <RecommendationCard
                 key={rec.id}
+                index={index}
                 id={rec.id}
                 dishName={rec.dishName}
                 category={rec.category}

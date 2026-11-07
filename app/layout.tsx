@@ -65,7 +65,7 @@ export default function RootLayout({
         <header className="sticky top-0 z-40 border-b border-border-subtle bg-card/90 backdrop-blur-md">
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-8">
             <div className="flex min-w-0 items-center gap-7">
-              <Link href="/" aria-label="Food Recs home" className="min-w-0 flex-shrink-0">
+              <Link href="/" className="min-w-0 flex-shrink-0">
                 <Logo />
               </Link>
               <Suspense fallback={<HeaderNavFallback />}>

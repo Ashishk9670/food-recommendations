@@ -76,7 +76,7 @@ export default async function RestaurantsPage({
         </div>
       ) : (
         <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {restaurants.map((spot) => (
+          {restaurants.map((spot, index) => (
             <li key={spot.slug}>
               <Link
                 href={`/restaurants/${spot.slug}`}
@@ -93,6 +93,8 @@ export default async function RestaurantsPage({
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       placeholder="blur"
                       blurDataURL={IMAGE_BLUR_DATA_URL}
+                      loading={index < 3 ? "eager" : "lazy"}
+                      fetchPriority={index === 0 ? "high" : "auto"}
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center text-faint">

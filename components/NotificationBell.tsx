@@ -79,13 +79,16 @@ export default function NotificationBell() {
   }
 
   const count = unseen.length;
+  // The badge and the button's accessible name use the same text, so voice
+  // control ("click 12") and screen readers agree with what's on screen.
+  const badge = count > 99 ? "99+" : String(count);
 
   return (
     <div ref={containerRef} className="relative">
       <button
         type="button"
         onClick={toggle}
-        aria-label={count > 0 ? `Notifications, ${count} new` : "Notifications"}
+        aria-label={count > 0 ? `Notifications, ${badge} new` : "Notifications"}
         aria-expanded={open}
         className="relative flex h-10 w-10 items-center justify-center rounded-full text-muted transition-colors hover:bg-card-muted hover:text-ink"
       >
@@ -95,7 +98,7 @@ export default function NotificationBell() {
             data-testid="notification-count"
             className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary px-1 text-[11px] font-bold leading-none text-white ring-2 ring-card"
           >
-            {count > 9 ? "9+" : count}
+            {badge}
           </span>
         )}
       </button>

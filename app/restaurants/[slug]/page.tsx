@@ -106,9 +106,10 @@ export default async function RestaurantPage({ params }: PageProps) {
         {dishes.length === 1 ? "The dish" : "Dishes, best rated first"}
       </h2>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {dishes.map((rec) => (
+        {dishes.map((rec, index) => (
           <RecommendationCard
             key={rec.id}
+            index={index}
             id={rec.id}
             dishName={rec.dishName}
             category={rec.category}

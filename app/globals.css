@@ -12,7 +12,8 @@
   --border-hover: #d8cdbd;
   --ink: #1a1d20;
   --muted: #5f5850;
-  --faint: #8d847a;
+  /* 4.5:1+ on canvas, card and card-muted (WCAG AA for small text). */
+  --faint: #736a60;
   /* Button fill; white text on it passes WCAG AA. */
   --primary: #ab2f00;
   --primary-hover: #8f2700;
@@ -22,7 +23,7 @@
   --accent-soft: #fdeee8;
   --secondary: #e11d48;
   --secondary-soft: #ffe4e6;
-  --price: #0d9488;
+  --price: #0f766e;
   --star: #f59e0b;
   --star-off: #e5e7eb;
   --danger: #ba1a1a;
@@ -52,7 +53,7 @@
     --border-hover: #54483c;
     --ink: #f3eee7;
     --muted: #b8ada0;
-    --faint: #8a7f73;
+    --faint: #9d9184;
     --primary: #c2410c;
     --primary-hover: #d24a12;
     --on-primary: #ffffff;

@@ -551,7 +551,7 @@ export default function SubmitForm({
                   type="button"
                   onClick={() => uploadInputRef.current?.click()}
                   disabled={!hydrated || preparing}
-                  aria-label="Add another photo"
+                  aria-label={`Add photo ${previewUrls.length + i + 1}`}
                   className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-[1.5px] border-dashed border-border-subtle bg-card-muted text-faint transition hover:border-border-hover hover:text-muted"
                 >
                   <Plus aria-hidden="true" className="h-4 w-4" />
