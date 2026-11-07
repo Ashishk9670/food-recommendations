@@ -376,7 +376,9 @@ test.describe("write flow (creates one test dish, then deletes it)", () => {
         await page.goto(`/?q=${encodeURIComponent(dishName)}`);
         await card().getByRole("button", { name: "Delete" }).click();
         await expect(card()).toHaveCount(0);
-        expect((await page.request.get(`/recommendation/${id}`)).status()).toBe(404);
+        // Streams behind a loading skeleton, so it's a 200 marked noindex.
+        await page.goto(`/recommendation/${id}`);
+        await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
         id = 0;
       });
     } finally {

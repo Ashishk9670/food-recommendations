@@ -7,6 +7,11 @@ import { defineConfig, devices } from "@playwright/test";
 //
 //   npm run test:prod
 //   PROD_URL=https://<preview>.vercel.app npm run test:prod
+//
+// The write test makes 2 real submissions (the dish, then a rejected
+// duplicate) against the live 5-per-10-minutes-per-IP limit, so run the
+// suite at most twice in any 10 minutes or it fails with "Too many
+// submissions".
 const baseURL = process.env.PROD_URL ?? "https://food-recommendations-six.vercel.app";
 
 export default defineConfig({
