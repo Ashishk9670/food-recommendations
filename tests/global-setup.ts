@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { createClient } from "@supabase/supabase-js";
 import { Redis } from "@upstash/redis";
 import dotenv from "dotenv";
 
@@ -18,4 +21,23 @@ export default async function globalSetup() {
   if (keys.length) {
     await redis.del(...keys);
   }
+
+  await ensureSeedImage();
+}
+
+// Seeded rows point at recommendation-images/seed.png in the TEST project's
+// bucket. Make sure it exists (idempotent), or every seeded card's photo
+// 400s and floods the run's output with image-optimizer errors.
+async function ensureSeedImage() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SECRET_KEY;
+  if (!url || !key) return;
+  const supabase = createClient(url, key);
+  const { error } = await supabase.storage
+    .from("recommendation-images")
+    .upload("seed.png", readFileSync(path.join(__dirname, "fixtures/test-dish.png")), {
+      contentType: "image/png",
+      upsert: true,
+    });
+  if (error) console.warn(`Couldn't ensure the seed image exists: ${error.message}`);
 }

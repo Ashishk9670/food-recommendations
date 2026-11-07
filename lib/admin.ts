@@ -4,10 +4,11 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { prisma } from "@/lib/db";
+import { ADMIN_COOKIE } from "@/lib/admin-cookie";
 
 const scrypt = promisify(scryptCb) as (password: string, salt: Buffer, keylen: number) => Promise<Buffer>;
 
-export const ADMIN_COOKIE = "admin_session";
+export { ADMIN_COOKIE };
 export const OWNER_ACTOR = "owner";
 const SESSION_MAX_AGE_S = 60 * 60 * 24 * 7;
 

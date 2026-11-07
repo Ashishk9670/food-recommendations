@@ -42,3 +42,14 @@ test.describe("SEO endpoints and error pages", () => {
     await expect(page.getByRole("link", { name: "Browse Recommendations" })).toBeVisible();
   });
 });
+
+test("anonymous visitors to admin pages get a real HTTP redirect to the login page", async ({
+  request,
+}) => {
+  for (const path of ["/admin", "/admin/reports", "/admin/audit", "/admin/team"]) {
+    const res = await request.get(path, { maxRedirects: 0 });
+    expect(res.status(), path).toBe(307);
+    expect(res.headers()["location"], path).toMatch(/\/admin\/login$/);
+  }
+  expect((await request.get("/admin/login", { maxRedirects: 0 })).status()).toBe(200);
+});
