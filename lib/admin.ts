@@ -131,7 +131,8 @@ export type AuditAction =
   | "export_csv"
   | "admin_added"
   | "admin_removed"
-  | "admin_password_reset";
+  | "admin_password_reset"
+  | "password_changed";
 
 export const AUDIT_LABELS: Record<AuditAction, string> = {
   login: "Signed in",
@@ -143,6 +144,7 @@ export const AUDIT_LABELS: Record<AuditAction, string> = {
   admin_added: "Added an admin",
   admin_removed: "Removed an admin",
   admin_password_reset: "Reset an admin's password",
+  password_changed: "Changed their own password",
 };
 
 // Never lets a logging failure break the action being logged.

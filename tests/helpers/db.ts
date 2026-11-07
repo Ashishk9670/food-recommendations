@@ -1,8 +1,14 @@
 import dotenv from "dotenv";
 import { createHash, randomBytes, scryptSync } from "node:crypto";
-import { Pool } from "pg";
+import pg, { Pool } from "pg";
 
 dotenv.config({ path: ".env.test" });
+
+// The app's timestamp columns have no time zone and Prisma writes them in
+// UTC. node-postgres by default sends a JS Date as *local* time, which on a
+// machine in IST stored seeded rows 5h30m in the future (so they showed up as
+// "new" in the notification bell, sorted wrong, etc.). Send UTC instead.
+pg.defaults.parseInputDatesAsUTC = true;
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const BASE_URL = `http://localhost:${process.env.PLAYWRIGHT_PORT ?? 3100}`;
@@ -116,4 +122,15 @@ export async function createAdminSessionCookie(
 export async function deleteAdminUsersByPrefix(prefix: string): Promise<void> {
   await pool.query(`DELETE FROM "AdminUser" WHERE "username" LIKE $1`, [`${prefix}%`]);
   await pool.query(`DELETE FROM "AuditLog" WHERE "actor" LIKE $1 OR "detail" LIKE $1`, [`${prefix}%`]);
+}
+
+export async function insertAuditEntries(
+  rows: { actor: string; action: string; detail?: string; createdAt: Date }[],
+): Promise<void> {
+  for (const row of rows) {
+    await pool.query(
+      `INSERT INTO "AuditLog" ("actor", "action", "detail", "createdAt") VALUES ($1, $2, $3, $4)`,
+      [row.actor, row.action, row.detail ?? null, row.createdAt],
+    );
+  }
 }

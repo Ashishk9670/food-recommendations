@@ -82,6 +82,8 @@ Playwright specs live in `tests/`. They talk to a dedicated test Supabase projec
 ## CI/CD
 
 - **GitHub Actions** (`.github/workflows/ci.yml`): a `Lint & Typecheck` job and a `Playwright E2E` job, triggered on push/PR to `main` and once daily (12:00 PM IST). The daily run (and a manual "Run workflow") also runs `Production smoke (read-only)` against the live site — every page, filter, sort, search and the admin lock — without creating any data. The E2E job always uploads the HTML report as an artifact and writes a pass/fail line to the run's job summary, so results are checkable at a glance without downloading anything.
+- **Region**: `vercel.json` pins server functions to `bom1` (Mumbai), next to the Supabase database (`ap-south-1`). Running them in Vercel's default US region put every database round trip across the globe.
+- **Sentry** is configured for error reporting only; its tracing and debug code is compiled out (`compiler.define` in `next.config.ts`) to keep the first-load JavaScript small.
 - **Deploying**: `git push` only runs CI — it does not deploy. Shipping to production is a separate, explicit step: `vercel deploy --prod`. Environment variable changes in Vercel only take effect on the next deploy after being set.
 
 ## Project structure notes

@@ -4,6 +4,7 @@ import {
   createAdminUser,
   deleteAdminUsersByPrefix,
   deleteRecommendationsByPrefix,
+  insertAuditEntries,
   seedRecommendations,
 } from "./helpers/db";
 
@@ -160,5 +161,81 @@ test("only the owner can manage the team, and bad input is rejected", async ({ b
   expect((await post({ username: "Bad Name!", password: "long-enough-pass" })).status()).toBe(400);
   expect((await post({ username: `${PREFIX}s${suffix()}`, password: "short" })).status()).toBe(400);
   expect((await post({ username: existing, password: "long-enough-pass" })).status()).toBe(409);
+  await owner.context().close();
+});
+
+test("an admin can change their own password, which signs out their other sessions", async ({ browser }) => {
+  const username = `${PREFIX}p${suffix()}`;
+  const user = await createAdminUser(username, "old-password-123");
+
+  const here = await browser.newContext();
+  await here.addCookies([await createAdminSessionCookie(user)]);
+  const elsewhere = await browser.newContext();
+  await elsewhere.addCookies([await createAdminSessionCookie(user)]);
+  const page = await here.newPage();
+
+  await page.goto("/admin/account");
+  await page.getByLabel("Current password").fill("not-my-password");
+  await page.getByLabel("New password", { exact: true }).fill("brand-new-password-1");
+  await page.getByLabel("Confirm new password").fill("brand-new-password-1");
+  await page.getByRole("button", { name: "Change password" }).click();
+  await expect(page.locator('p[role="alert"]')).toHaveText("Your current password is incorrect.");
+
+  await page.getByLabel("Current password").fill("old-password-123");
+  await page.getByRole("button", { name: "Change password" }).click();
+  await expect(page.getByRole("status")).toContainText("Password changed");
+
+  // Still signed in here (fresh session)...
+  await page.goto("/admin");
+  await expect(page.getByTestId("admin-actor")).toHaveText(username);
+  // ...but the other browser was signed out.
+  const otherPage = await elsewhere.newPage();
+  await otherPage.goto("/admin");
+  await otherPage.waitForURL("/admin/login");
+
+  await page.goto(`/admin/audit?actor=${username}`);
+  await expect(page.getByTestId("audit-row").filter({ hasText: "Changed their own password" })).toHaveCount(1);
+
+  await here.close();
+  await elsewhere.close();
+});
+
+test("the owner is told where the owner password lives", async ({ browser }) => {
+  const owner = await ownerPage(browser);
+  await owner.goto("/admin/account");
+  await expect(owner.getByText("ADMIN_PASSWORD", { exact: true })).toBeVisible();
+  await expect(owner.getByLabel("Current password")).toHaveCount(0);
+  await owner.context().close();
+});
+
+test("the audit log filters by person, action and date range", async ({ browser }) => {
+  const actor = `${PREFIX}a${suffix()}`;
+  await insertAuditEntries([
+    { actor, action: "login", createdAt: new Date("2020-01-10T06:00:00Z") },
+    { actor, action: "export_csv", detail: "5 recommendations", createdAt: new Date("2020-01-12T06:00:00Z") },
+    { actor, action: "login", createdAt: new Date("2020-02-20T06:00:00Z") },
+  ]);
+  const owner = await ownerPage(browser);
+  const rows = owner.getByTestId("audit-row");
+
+  await owner.goto(`/admin/audit?actor=${actor}`);
+  await expect(rows).toHaveCount(3);
+
+  await owner.getByLabel("Action", { exact: true }).selectOption("login");
+  await owner.getByRole("button", { name: "Filter" }).click();
+  await owner.waitForURL(/action=login/);
+  await expect(rows).toHaveCount(2);
+  await expect(owner.getByTestId("audit-count")).toHaveText("2 entries matching these filters");
+
+  // Dates are whole IST days, inclusive at both ends.
+  await owner.getByLabel("From", { exact: true }).fill("2020-02-01");
+  await owner.getByLabel("To", { exact: true }).fill("2020-02-20");
+  await owner.getByRole("button", { name: "Filter" }).click();
+  await owner.waitForURL(/from=2020-02-01/);
+  await expect(rows).toHaveCount(1);
+  await expect(rows.first()).toContainText("20 Feb 2020");
+
+  await owner.getByRole("link", { name: "Clear filters" }).click();
+  await owner.waitForURL("/admin/audit");
   await owner.context().close();
 });

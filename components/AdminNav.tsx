@@ -10,7 +10,7 @@ export default function AdminNav({
   reportedCount,
 }: {
   session: AdminSessionInfo;
-  current: "dashboard" | "reports" | "audit" | "team";
+  current: "dashboard" | "reports" | "audit" | "team" | "account";
   reportedCount?: number;
 }) {
   const items = [
@@ -22,6 +22,7 @@ export default function AdminNav({
     },
     { key: "audit", href: "/admin/audit", label: "Audit log" },
     ...(session.isOwner ? [{ key: "team", href: "/admin/team", label: "Team" }] : []),
+    { key: "account", href: "/admin/account", label: "My account" },
   ] as const;
 
   return (
